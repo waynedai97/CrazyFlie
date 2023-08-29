@@ -1,0 +1,6 @@
+blacklist_ids: [
+  "cf19", 
+  "cf20", 
+  "cf21",
+  "cf22",
+  "cf23"]

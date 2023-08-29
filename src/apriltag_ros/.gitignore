@@ -1,0 +1,39 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# vscode
+*.vscode
+
+# calibration
+calibration/*
+
+# calibration
+!calibration/cf1.yaml
+!calibration/Checkerboard-A4-25mm-10x7.svg
+!calibration/calibration_2-25.zip

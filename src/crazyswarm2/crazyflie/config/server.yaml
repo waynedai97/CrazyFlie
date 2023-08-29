@@ -1,0 +1,13 @@
+/crazyflie_server:
+  ros__parameters:
+    # simulation related
+    sim:
+      max_dt: 0 #0.1              # artificially limit the step() function (set to 0 to disable)
+      state_pub_dt: 0.3
+      maximum_compensation: 8
+      backend: np                 # see backend folder for a list 
+      visualizations:             # see visualization folder for a list
+        - rviz
+        # - pdf
+      controller: mellinger # none, pid, mellinger
+      # controller: pid # none, pid, mellinger

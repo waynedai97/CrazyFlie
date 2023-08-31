@@ -1,0 +1,44 @@
+planner_env:
+  ros__parameters:
+
+    # Timeout for agent before it is removed
+    agent_timeout: 10.0
+
+    # Time period for publishing waypoint callback (seconds)
+    pub_wp_timer_period: 0.1
+
+    # Time period for checking if agent has fulfilled goals
+    check_agent_timer_period: 0.1
+
+    # Distance between goal and actual pose for goal to be fulfilled (meters)
+    goal_tolerance: 0.25
+
+    # Length of actual map x-axis (meters)
+    map_x: 19.0
+
+    # Length of actual map y-axis (meters)
+    map_y: 19.0
+
+    # Number of cells in x-axis  (width) actual map 630
+    map_x_cells: 570
+
+    # Number of cells in y-axis  (length)
+    map_y_cells: 570
+
+    # Agent height (meters)
+    agent_height: 1.0
+
+    route_path: '/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml'
+
+    env_path: '/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl'
+
+    # arena_scale: 12
+
+    # agent_arena_velocity: 0.55
+
+    # const_time_bias: 52.5
+
+    # agent_env_velocity: 0.2
+
+    # working_time_bias: 10
+

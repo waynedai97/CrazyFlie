@@ -220,27 +220,6 @@ class planner_ROS(Node):
     def agent_callback(self, msg):
         print("Pose is ",msg.pose.position.x)
 
-    def timer_callback(self):
-        self.get_logger().info("Hello ROS2")
-        self.task_env.task_dic[node]['location'] *=12
-        # self.task_env.task_dic[node]['time_start'] *= ((0.2*12)/0.55)
-        # self.task_env.task_dic[node]['time_start'] += 52.5
-        self.task_env.task_dic[node]['time'] += 10
-        self.task_env.task_dic[node]['time_finish'] = self.task_env.task_dic[node]['time_start'] + self.task_env.task_dic[node]['time']
-
-        for agent in self.task_env.agent_dic:
-            for i in range(len(self.task_env.agent_dic[agent]['arrival_time'])):
-                if i != 0:
-                    old_ar_t = self.task_env.agent_dic[agent]['arrival_time'][i]
-                    self.task_env.agent_dic[agent]['arrival_time'][i] *= ((0.2*12)/0.55) # Magic numbers for scaling arrival time
-                    self.task_env.agent_dic[agent]['arrival_time'][i] += 52.5 + 10 #takeoff time
-                    new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
-                else:
-                    old_ar_t = self.task_env.agent_dic[agent]['arrival_time'][i]
-                    self.task_env.agent_dic[agent]['arrival_time'][i] *= ((0.2*12)/0.55) # Magic numbers for scaling arrival time
-                    self.task_env.agent_dic[agent]['arrival_time'][i] += 52.5 #takeoff time
-                    new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
-
     def scale_env_time(self):
         arena_vel = self.agent_arena_velocity
         env_vel = self.agent_env_velocity

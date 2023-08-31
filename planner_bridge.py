@@ -1,5 +1,5 @@
 import pickle
-
+from  time import  sleep
 import numpy as np
 from time import time  # https://realpython.com/python-time-module/
 from functools import partial
@@ -12,7 +12,7 @@ import yaml
 from rclpy.node import Node
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Pose
 from crazyswarm_application.msg import AgentState, AgentsStateFeedback, UserCommand
-from crazyflie_interfaces.srv import  GoTo
+from crazyflie_interfaces.srv import  Land
 from crazyswarm_application.srv import Agents 
 
 # import torch
@@ -100,10 +100,10 @@ class Agent:
 class planner_ROS(Node):
 
     def __init__(
-        self, task_env, route_path
+        self, task_env=None, route_path=""
     ):
         super().__init__(
-            "planner_ROS",
+            "planner_env",
             allow_undeclared_parameters=True,
             automatically_declare_parameters_from_overrides=True,
         )
@@ -130,10 +130,23 @@ class planner_ROS(Node):
         
         # Agent parameters
         self.agent_timeout = self.get_parameter('agent_timeout').get_parameter_value().double_value
-        self.pub_wp_timer_period = 1#self.get_parameter('pub_wp_timer_period').get_parameter_value().double_value
+        print(self.get_parameter('agent_timeout').get_parameter_value().double_value)
+        self.pub_wp_timer_period = self.get_parameter('pub_wp_timer_period').get_parameter_value().double_value
+        print(self.pub_wp_timer_period)
         self.check_agent_timer_period = self.get_parameter('check_agent_timer_period').get_parameter_value().double_value
         self.goal_tolerance = self.get_parameter('goal_tolerance').get_parameter_value().double_value
-        self.height = self.get_parameter('agent_height').get_parameter_value().double_value
+        self.height =1.0 #self.get_parameter('agent_height').get_parameter_value().double_value
+        self.route_path =  "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
+        self.env_path = "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
+        self.arena_scale =12
+        self.agent_arena_velocity = 0.55#self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
+        self.agent_env_velocity =0.2 #self.get_parameter('agent_env_velocity').get_parameter_value().double_value
+        self.const_time_bias = 52.5# s#elf.get_parameter('const_time_bias').get_parameter_value().double_value
+        self.working_time_bias =10 #self.get_parameter('working_time_bias').get_parameter_value().double_value
+        self.land_on_node = False
+
+        self.land_client = self.create_client(Land, '/all/land')
+
         # self.create_service(Agents, "/external/receive", self.external_callback)
         print("------- Check data -----------")
         #print('agent timeout', self.agent_timeout)
@@ -141,7 +154,7 @@ class planner_ROS(Node):
         #print('check agent', self.check_agent_timer_period)
         #print('goal tolerance', self.goal_tolerance)
         print('height', self.height)
-        self.task_env = task_env
+        self.task_env = pickle.load(open(self.env_path, 'rb'))
         self.agent_index = [0] * self.task_env.agents_num
 
         self.debug = True
@@ -152,9 +165,8 @@ class planner_ROS(Node):
         self.map_x_cells = self.get_parameter('map_x_cells').get_parameter_value().integer_value
         self.map_y_cells = self.get_parameter('map_y_cells').get_parameter_value().integer_value
         self.map_data = (self.map_x, self.map_y, self.map_x_cells, self.map_y_cells)
-        self.finished = False
+        self.finished_count = 0
         self.first_call = True
-        self.route_path = route_path
         # self.pub_srv = self.create_service(Trigger, 'add_two_ints', self.publish_waypoints)
         # self.goto_cli = self.create_client(GoTo, 'add_two_ints')
         print('Check map data', self.map_data)
@@ -196,6 +208,7 @@ class planner_ROS(Node):
         #     self.pub_wp_timer_period, self.publish_waypoints
         # )
         self.agent_pose_sub = []
+        self.land_clients = []
         self.names = []
         # self.create_timer(0.2, self.publish_waypoints)
 
@@ -207,28 +220,39 @@ class planner_ROS(Node):
     def agent_callback(self, msg):
         print("Pose is ",msg.pose.position.x)
 
-    def timer_callback(self):
-        self.get_logger().info("Hello ROS2")
-
     def scale_env_time(self):
+        arena_vel = self.agent_arena_velocity
+        env_vel = self.agent_env_velocity
+        arena_scale = self.arena_scale
+        working_time_bias = self.working_time_bias
+        const_time_bias = self.const_time_bias
+
+        print(arena_scale)
+        print( arena_vel)
+        print( env_vel)
+        print( working_time_bias)
+        print( const_time_bias)
+        
         for agent in self.task_env.agent_dic:
             for i in range(len(self.task_env.agent_dic[agent]['arrival_time'])):
                 old_ar_t = self.task_env.agent_dic[agent]['arrival_time'][i]
-                self.task_env.agent_dic[agent]['arrival_time'][i] *= ((0.2*12)/0.55) # Magic numbers for scaling arrival time
-                self.task_env.agent_dic[agent]['arrival_time'][i] += 52.5 #takeoff time
+                self.task_env.agent_dic[agent]['arrival_time'][i] *= ((env_vel*arena_scale)/arena_vel) # Magic numbers for scaling arrival time
+                self.task_env.agent_dic[agent]['arrival_time'][i] += const_time_bias #takeoff time
                 new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
 
         for node in self.task_env.task_dic:
-            self.task_env.task_dic[node]['location'] *=20
-            self.task_env.task_dic[node]['time_start'] *= ((0.2*12)/0.55)
-            self.task_env.task_dic[node]['time_start'] += 52.5
-            self.task_env.task_dic[node]['time'] += 10
+            self.task_env.task_dic[node]['location'] *=arena_scale
+            self.task_env.task_dic[node]['time_start'] *= ((env_vel*arena_scale)/arena_vel)
+            self.task_env.task_dic[node]['time_start'] += const_time_bias
+            self.task_env.task_dic[node]['time'] += working_time_bias
             self.task_env.task_dic[node]['time_finish'] = self.task_env.task_dic[node]['time_start'] + self.task_env.task_dic[node]['time']
 
     def load_execute_env(self, task_env, route_path):
         
         # LOAD THE ROUTES
-        yaml_result_file =  route_path + "/route_ros.yaml"
+        print('here')
+        yaml_result_file =  self.route_path
+        print(yaml_result_file)
         # yaml_param_file = route_path + "/planner_param.yaml"
         routes = []
         if os.path.exists(yaml_result_file):
@@ -249,7 +273,7 @@ class planner_ROS(Node):
         task_env.execute_by_route()
 
 
-    # def external_callback(self, check):
+    # def external_callback(splanner_env/env/task_env.py
     def external_callback(self, request, response):    
 
         self.get_logger().info("start timer")
@@ -287,6 +311,21 @@ class planner_ROS(Node):
             self.RLPlanner.env.plot_live_env(self.robots_route, self.robots_name, self.next_position, self.robots_heading)
         else:
             return
+    
+    def change_height(self,goal_pos, agent_id):
+        waypoint_cmd_old = self.create_usercommand(
+        cmd = "goto_velocity",
+        uav_id = [agent_id],
+        goal = Point(
+            x = goal_pos[0],
+            y = goal_pos[1],
+            z = 1.5,
+        ),
+        yaw = 0.0, #float(heading_real),
+        is_external=True)
+        self.usercommand_pub.publish(waypoint_cmd_old)
+        print(f'Landing the agent {agent_id}')
+                
 
     def agent_pose_callback(self, pose, agent_idx):
         """Subscriber callback to save the actual pose of the agent 
@@ -300,6 +339,7 @@ class planner_ROS(Node):
         """
         # print(agent_id)
         agent_id  = 'cf'+str(agent_idx+1) # change the var name to agent_name and agent_idx to agent_id to decrease redundancy
+        # print(agent_id)
         current_pose = [pose.pose.position.x, pose.pose.position.y]
 
         agent_node_idx = self.agent_index[agent_idx]
@@ -309,13 +349,18 @@ class planner_ROS(Node):
                 goal_pos = [0.0,0.0]
                 # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
                 self.agent_index[agent_idx] += 1
+                goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
+                # if goal_abs_difference < 1:
+                #     if self.finished_count >= self.task_env.agents_num:
+                #     self.finished_count += 1
+
                 waypoint_cmd_old = self.create_usercommand(
                 cmd = "goto_velocity",
                 uav_id = [agent_id],
                 goal = Point(
                     x = goal_pos[0],
                     y = goal_pos[1],
-                    z = 1.0,
+                    z = self.height,
                 ),
                 yaw = 0.0, #float(heading_real),
                 is_external=True)
@@ -334,16 +379,17 @@ class planner_ROS(Node):
                 tracker_idx = self.agent_index[agent_idx]
                 arrival_time = self.task_env.agent_dic[agent_idx]['arrival_time'][tracker_idx]
                 goal_abs_difference = abs(goal_pos[0]-current_pose[0]) + abs(goal_pos[1]-current_pose[1])
-                check1 = (current_time > arrival_time)
-                check2 = (goal_abs_difference < 1)
-                if ( check1 and check2 ) or (agent_idx in self.node_dic[next_task_node]['agents']):
+                # check1 = (current_time > arrival_time)
+                check1 = (goal_abs_difference < 1)
+                if ( check1) or (agent_idx in self.node_dic[next_task_node]['agents']):
                         # if abs(current_time - arrival_time) > 0.5:
                         #     print(f'agent {agent_idx} missed its arrival time at node {}')
                         if agent_idx not in self.node_dic[next_task_node]['agents']:
                             print(f'agent  {agent_idx+1} arrived at node {next_task_node} at time {current_time} while the arrival time was {arrival_time} ')
-                        # print(f'agent{agent_idx+1} going to the node')
-                        # task_finish_time = self.task_env.task_dic[next_task_node]['time_finish']
+                            land_client = self.land_clients[agent_idx]
                             self.node_dic[next_task_node]['agents'].append(agent_idx)
+                            if self.land_on_node:
+                                self.change_height(goal_pos, agent_id)
 
                         if len(self.node_dic[next_task_node]['agents']) == self.node_dic[next_task_node]['requirement']:
                             if self.node_dic[next_task_node]['working_start_time'] == 0:
@@ -370,7 +416,7 @@ class planner_ROS(Node):
                     goal = Point(
                         x = goal_pos[0],
                         y = goal_pos[1],
-                        z = 1.0,
+                        z = self.height,
                     ),
                     yaw = 0.0, #float(heading_real),
                     is_external=True)
@@ -379,8 +425,6 @@ class planner_ROS(Node):
         else:
 
             print(f'Agent {agent_id} has completed its routes')
-            if self.finished:
-                print(f'We are done here')
 
         # if abs(current_pose.x-goal_pos[0]) < 0.1 and abs(current_pose.y - goal_pos[1] < 0.1):
         #     print('agent  arrived - ', agent_idx)
@@ -440,6 +484,7 @@ class planner_ROS(Node):
                         10,
                     )
                 )
+                self.land_clients.append(self.create_client(Land, agent_id+"/land"))
 
         for agent in agent_states.agents:
                          
@@ -640,15 +685,12 @@ class planner_ROS(Node):
 
 def main():
     rclpy.init(args=None)
-    route_path = "/home/ur10/swarming/crazyswarm2_ws/src/crazyswarm2_application"
-    task_env = pickle.load(open('env_ros.pkl', 'rb')) #WE NEED TO RESCALE THE ARRIVAL TIME AND THE START-FINISH TIME
+    # route_path = "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/"
+    # task_env = pickle.load(open(route_path+'env_ros.pkl', 'rb')) #WE NEED TO RESCALE THE ARRIVAL TIME AND THE START-FINISH TIME
     # task_env = TaskEnv((5, 5), tasks_range=(10, 10), traits_dim=1, max_coalition_size=2, seed=0)
    
 
-    planner_ros = planner_ROS(
-        task_env = task_env,
-        route_path=route_path
-    )
+    planner_ros = planner_ROS()
 
 
 

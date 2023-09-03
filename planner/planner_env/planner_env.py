@@ -144,7 +144,8 @@ class planner_ROS(Node):
         self.agent_arena_velocity = self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
         self.agent_env_velocity =self.get_parameter('agent_env_velocity').get_parameter_value().double_value
         self.const_time_bias =  self.get_parameter('const_time_bias').get_parameter_value().double_value
-        self.working_time_bias =self.get_parameter('working_time_bias').get_parameter_value().double_value
+        self.working_time_bias = self.get_parameter('working_time_bias').get_parameter_value().double_value
+        print(self.working_time_bias)
         self.land_on_node = False
 
         self.land_client = self.create_client(Land, '/all/land')
@@ -305,6 +306,7 @@ class planner_ROS(Node):
             self.task_env.task_dic[node]['time_start'] *= ((env_vel*arena_scale)/arena_vel)
             self.task_env.task_dic[node]['time_start'] += const_time_bias
             self.task_env.task_dic[node]['time'] += working_time_bias
+            print(self.task_env.task_dic[node]['time'])
             self.task_env.task_dic[node]['time_finish'] = self.task_env.task_dic[node]['time_start'] + self.task_env.task_dic[node]['time']
 
     def load_execute_env(self, task_env, route_path):

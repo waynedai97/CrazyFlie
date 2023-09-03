@@ -14,6 +14,8 @@ from geometry_msgs.msg import Point, PoseStamped, Quaternion, Pose
 from crazyswarm_application.msg import AgentState, AgentsStateFeedback, UserCommand
 from crazyflie_interfaces.srv import  Land
 from crazyswarm_application.srv import Agents 
+from visualization_msgs.msg import Marker, MarkerArray
+from std_msgs.msg import Header
 
 # import torch
 # from .modules.test_parameter import *
@@ -130,19 +132,19 @@ class planner_ROS(Node):
         
         # Agent parameters
         self.agent_timeout = self.get_parameter('agent_timeout').get_parameter_value().double_value
-        print(self.get_parameter('agent_timeout').get_parameter_value().double_value)
+        print(self.agent_timeout)
         self.pub_wp_timer_period = self.get_parameter('pub_wp_timer_period').get_parameter_value().double_value
         print(self.pub_wp_timer_period)
         self.check_agent_timer_period = self.get_parameter('check_agent_timer_period').get_parameter_value().double_value
         self.goal_tolerance = self.get_parameter('goal_tolerance').get_parameter_value().double_value
         self.height =1.0 #self.get_parameter('agent_height').get_parameter_value().double_value
-        self.route_path =  "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
-        self.env_path = "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
-        self.arena_scale =12
-        self.agent_arena_velocity = 0.55#self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
-        self.agent_env_velocity =0.2 #self.get_parameter('agent_env_velocity').get_parameter_value().double_value
-        self.const_time_bias = 52.5# s#elf.get_parameter('const_time_bias').get_parameter_value().double_value
-        self.working_time_bias =10 #self.get_parameter('working_time_bias').get_parameter_value().double_value
+        self.route_path = self.get_parameter('route_path').get_parameter_value().string_value #"/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
+        self.env_path =  self.get_parameter('env_path').get_parameter_value().string_value #"/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
+        self.arena_scale =self.get_parameter('arena_scale').get_parameter_value().double_value
+        self.agent_arena_velocity = self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
+        self.agent_env_velocity =self.get_parameter('agent_env_velocity').get_parameter_value().double_value
+        self.const_time_bias =  self.get_parameter('const_time_bias').get_parameter_value().double_value
+        self.working_time_bias =self.get_parameter('working_time_bias').get_parameter_value().double_value
         self.land_on_node = False
 
         self.land_client = self.create_client(Land, '/all/land')
@@ -170,6 +172,9 @@ class planner_ROS(Node):
         # self.pub_srv = self.create_service(Trigger, 'add_two_ints', self.publish_waypoints)
         # self.goto_cli = self.create_client(GoTo, 'add_two_ints')
         print('Check map data', self.map_data)
+        self.marker_publishers = []
+        for i in range(self.task_env.agents_num):
+            self.marker_publishers.append(self.create_publisher(MarkerArray, 'cf'+str(i+1)+'_marker', 10))
 
         if self.debug == True:
             for i in range(self.task_env.agents_num):
@@ -180,6 +185,7 @@ class planner_ROS(Node):
         #####
         self.usercommand_pub = self.create_publisher(UserCommand, "/user", 10)
         self.node_dic = dict()
+        self.node_markers = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         for i in range(self.task_env.tasks_num):
             self.node_dic[i] = {'agents':[],
                                 'requirement':self.task_env.task_dic[i]['requirements'][0],
@@ -187,6 +193,7 @@ class planner_ROS(Node):
                                 # 'agent_pose_bias': []#[0.5*x for x in range(self.task_env.task_dic[i]['requirements'][0])]
                                 'travelling_agents':[],
             }
+
         #####
         # Create subscribers
         #####
@@ -216,30 +223,61 @@ class planner_ROS(Node):
         self.load_execute_env(self.task_env, self.route_path)
         self.scale_env_time()
         self.current_time = time()
+    
+    def publish_node_markers(self):
+
+        marker_array = MarkerArray()
+        marker_array.markers = []  # Clear previous markers
+        for i in range(self.task_env.tasks_num):
+            # Create a moving marker
+            moving_marker = Marker()
+            moving_marker.header = Header(frame_id='world')
+            moving_marker.type = Marker.MESH_RESOURCE
+            moving_marker.action = Marker.ADD
+            moving_marker.pose.position.x = self.task_env.task_dic[i]['location'][0]  # Update the x position based on time
+            moving_marker.pose.position.y = self.task_env.task_dic[i]['location'][1]  # Update the y position based on time
+            moving_marker.pose.position.z = 0.
+            moving_marker.pose.orientation.w = 1.0
+            moving_marker.scale.x = 1.0
+            moving_marker.scale.y = 1.0
+            moving_marker.scale.z = 1.0
+            moving_marker.mesh_resource = 'package://planner_env/stl/cone.stl'  # Replace with the path to your STL file
+            moving_marker.color.r = 1.0
+            moving_marker.color.g = 0.0
+            moving_marker.color.b = 0.0
+            moving_marker.color.a = 1.0
+            moving_marker.ns = str(i)
+
+            marker_array.markers.append(moving_marker)
+
+        # Publish the moving marker
+        self.node_markers.publish(marker_array)
+
+    def publish_drone_markers(self, agent_idx, pose):
+        marker_array = MarkerArray()
+        moving_marker = Marker()
+        moving_marker.header = Header(frame_id='world')
+        moving_marker.type = Marker.MESH_RESOURCE
+        moving_marker.action = Marker.ADD
+        moving_marker.pose.position.x = pose.pose.position.x
+        moving_marker.pose.position.y = pose.pose.position.y
+        moving_marker.pose.position.z = pose.pose.position.z
+        moving_marker.scale.x = 1.0
+        moving_marker.scale.y = 1.0
+        moving_marker.scale.z = 1.0
+        moving_marker.mesh_resource = 'package://rviz_markers/stl/drone600.stl'  # Replace with the path to your STL file
+        moving_marker.color.r = 1.0
+        moving_marker.color.g = 0.0
+        moving_marker.color.b = 0.0
+        moving_marker.color.a = 1.0
+
+        marker_array.markers.append(moving_marker)
+
+        # Publish the moving marker
+        self.marker_publishers[agent_idx].publish(marker_array)
 
     def agent_callback(self, msg):
         print("Pose is ",msg.pose.position.x)
-
-    def timer_callback(self):
-        self.get_logger().info("Hello ROS2")
-        self.task_env.task_dic[node]['location'] *=12
-        # self.task_env.task_dic[node]['time_start'] *= ((0.2*12)/0.55)
-        # self.task_env.task_dic[node]['time_start'] += 52.5
-        self.task_env.task_dic[node]['time'] += 10
-        self.task_env.task_dic[node]['time_finish'] = self.task_env.task_dic[node]['time_start'] + self.task_env.task_dic[node]['time']
-
-        for agent in self.task_env.agent_dic:
-            for i in range(len(self.task_env.agent_dic[agent]['arrival_time'])):
-                if i != 0:
-                    old_ar_t = self.task_env.agent_dic[agent]['arrival_time'][i]
-                    self.task_env.agent_dic[agent]['arrival_time'][i] *= ((0.2*12)/0.55) # Magic numbers for scaling arrival time
-                    self.task_env.agent_dic[agent]['arrival_time'][i] += 52.5 + 10 #takeoff time
-                    new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
-                else:
-                    old_ar_t = self.task_env.agent_dic[agent]['arrival_time'][i]
-                    self.task_env.agent_dic[agent]['arrival_time'][i] *= ((0.2*12)/0.55) # Magic numbers for scaling arrival time
-                    self.task_env.agent_dic[agent]['arrival_time'][i] += 52.5 #takeoff time
-                    new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
 
     def scale_env_time(self):
         arena_vel = self.agent_arena_velocity
@@ -362,7 +400,8 @@ class planner_ROS(Node):
         agent_id  = 'cf'+str(agent_idx+1) # change the var name to agent_name and agent_idx to agent_id to decrease redundancy
         # print(agent_id)
         current_pose = [pose.pose.position.x, pose.pose.position.y]
-
+        self.publish_node_markers()
+    
         agent_node_idx = self.agent_index[agent_idx]
         if  (agent_node_idx < len(self.task_env.agent_dic[agent_idx]['arrival_time'])):
             next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
@@ -386,6 +425,7 @@ class planner_ROS(Node):
                 yaw = 0.0, #float(heading_real),
                 is_external=True)
                 self.usercommand_pub.publish(waypoint_cmd_old)
+                self.publish_drone_markers(agent_idx,pose)
             else:
 
                 if agent_idx not in self.node_dic[next_task_node]['travelling_agents']:
@@ -442,10 +482,12 @@ class planner_ROS(Node):
                     yaw = 0.0, #float(heading_real),
                     is_external=True)
                     self.usercommand_pub.publish(waypoint_cmd_old)
+                    self.publish_drone_markers(agent_idx,pose)
             self.finished = False
         else:
 
             print(f'Agent {agent_id} has completed its routes')
+            self.publish_drone_markers(agent_idx,pose)
 
         # if abs(current_pose.x-goal_pos[0]) < 0.1 and abs(current_pose.y - goal_pos[1] < 0.1):
         #     print('agent  arrived - ', agent_idx)
@@ -594,7 +636,7 @@ class planner_ROS(Node):
         # self.current_time = time()
 
     def check_agent_timer_callback(self):
-        """Check if agents: 
+        """Check if agents:
         1. Are in active flight state (not landing state). If False, remove from active agent list
         2. have time exceeded since updating last pose state (not landing state). If False, remove from active agent list
         3. Have an actual pose?  If not, send warning

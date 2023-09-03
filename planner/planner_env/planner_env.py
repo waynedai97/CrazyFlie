@@ -300,6 +300,7 @@ class planner_ROS(Node):
                 new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
 
         for node in self.task_env.task_dic:
+            # print(self.task_env.task_dic[node]['requirement'])
             self.task_env.task_dic[node]['location'] *=arena_scale
             self.task_env.task_dic[node]['time_start'] *= ((env_vel*arena_scale)/arena_vel)
             self.task_env.task_dic[node]['time_start'] += const_time_bias
@@ -443,6 +444,7 @@ class planner_ROS(Node):
                 # check1 = (current_time > arrival_time)
                 check1 = (goal_abs_difference < 1)
                 if ( check1) or (agent_idx in self.node_dic[next_task_node]['agents']):
+                        self.publish_drone_markers(agent_idx,pose)
                         # if abs(current_time - arrival_time) > 0.5:
                         #     print(f'agent {agent_idx} missed its arrival time at node {}')
                         if agent_idx not in self.node_dic[next_task_node]['agents']:

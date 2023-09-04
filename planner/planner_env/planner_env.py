@@ -266,7 +266,7 @@ class planner_ROS(Node):
         moving_marker.scale.x = 1.0
         moving_marker.scale.y = 1.0
         moving_marker.scale.z = 1.0
-        moving_marker.mesh_resource = 'package://rviz_markers/stl/drone600.stl'  # Replace with the path to your STL file
+        moving_marker.mesh_resource = 'package://planner_env/stl/drone600.stl'  # Replace with the path to your STL file
         moving_marker.color.r = 1.0
         moving_marker.color.g = 0.0
         moving_marker.color.b = 0.0

@@ -3,7 +3,7 @@ from glob import glob
 from setuptools import setup
 
 package_name = 'planner_env'
-submodules = 'planner_env/modules'
+submodules = 'planner_env/env'
 
 setup(
     name=package_name,
@@ -13,6 +13,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*launch.[pxy][yma]*')),
         (os.path.join('share', package_name, 'config'), glob('config/config.yaml')),
+        (os.path.join('share', package_name, 'stl'), glob('stl/*.[stl]*')),
         (os.path.join('share/ament_index/resource_index/packages'), ['resource/' + package_name]),
     ],
     install_requires=['setuptools'],

@@ -3,9 +3,16 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /MarkerArray1
+        - /MarkerArray1/Status1
+        - /MarkerArray1/Topic1
+        - /MarkerArray2
+        - /MarkerArray3
+        - /MarkerArray4
+        - /MarkerArray5
       Splitter Ratio: 0.5
-    Tree Height: 540
+    Tree Height: 549
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -68,13 +75,35 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        cf1:
+          Value: true
+        cf2:
+          Value: true
+        cf3:
+          Value: true
+        cf4:
+          Value: true
+        cf5:
+          Value: true
+        world:
+          Value: true
       Marker Scale: 0.75
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          cf1:
+            {}
+          cf2:
+            {}
+          cf3:
+            {}
+          cf4:
+            {}
+          cf5:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -83,174 +112,6 @@ Visualization Manager:
       Namespaces:
         id000: true
         id001: true
-        id002: true
-        id003: true
-        id004: true
-        id005: true
-        id006: true
-        id007: true
-        id008: true
-        id009: true
-        id010: true
-        id011: true
-        id012: true
-        id013: true
-        id014: true
-        id015: true
-        id016: true
-        id017: true
-        id018: true
-        id019: true
-        id020: true
-        id021: true
-        id022: true
-        id023: true
-        id024: true
-        id025: true
-        id026: true
-        id027: true
-        id028: true
-        id029: true
-        id030: true
-        id031: true
-        id032: true
-        id033: true
-        id034: true
-        id035: true
-        id036: true
-        id037: true
-        id038: true
-        id039: true
-        id040: true
-        id041: true
-        id042: true
-        id043: true
-        id044: true
-        id045: true
-        id046: true
-        id047: true
-        id048: true
-        id049: true
-        id050: true
-        id051: true
-        id052: true
-        id053: true
-        id054: true
-        id055: true
-        id056: true
-        id057: true
-        id060: true
-        id061: true
-        id062: true
-        id063: true
-        id064: true
-        id065: true
-        id066: true
-        id067: true
-        id068: true
-        id069: true
-        id070: true
-        id071: true
-        id072: true
-        id073: true
-        id074: true
-        id075: true
-        id076: true
-        id077: true
-        id078: true
-        id079: true
-        id080: true
-        id081: true
-        id082: true
-        id083: true
-        id084: true
-        id085: true
-        id086: true
-        id087: true
-        id088: true
-        id089: true
-        id090: true
-        id091: true
-        id092: true
-        id093: true
-        id094: true
-        id095: true
-        id096: true
-        id097: true
-        id098: true
-        id099: true
-        id100: true
-        id101: true
-        id102: true
-        id103: true
-        id104: true
-        id105: true
-        id106: true
-        id107: true
-        id108: true
-        id109: true
-        id110: true
-        id111: true
-        id112: true
-        id113: true
-        id114: true
-        id115: true
-        id116: true
-        id117: true
-        id118: true
-        id119: true
-        id120: true
-        id121: true
-        id122: true
-        id123: true
-        id124: true
-        id125: true
-        id126: true
-        id127: true
-        id128: true
-        id129: true
-        id130: true
-        id131: true
-        id132: true
-        id133: true
-        id134: true
-        id135: true
-        id136: true
-        id137: true
-        id138: true
-        id139: true
-        id140: true
-        id141: true
-        id142: true
-        id143: true
-        id144: true
-        id145: true
-        id146: true
-        id147: true
-        id148: true
-        id149: true
-        id150: true
-        id151: true
-        id152: true
-        id153: true
-        id154: true
-        id155: true
-        id156: true
-        id157: true
-        id158: true
-        id159: true
-        id160: true
-        id161: true
-        id162: true
-        id163: true
-        id164: true
-        id165: true
-        id166: true
-        id167: true
-        id168: true
-        id169: true
-        id170: true
-        id171: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -262,7 +123,7 @@ Visualization Manager:
       Enabled: true
       Name: TargetArray
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -302,7 +163,7 @@ Visualization Manager:
       Enabled: true
       Name: sim/camera
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -348,6 +209,87 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/visibility
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cf1_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cf2_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cf3_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cf4_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cf5_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        0: true
+        1: true
+        2: true
+        3: true
+        4: true
+        5: true
+        6: true
+        7: true
+        8: true
+        9: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: visualization_marker_array
       Value: true
   Enabled: true
   Global Options:
@@ -395,7 +337,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.210747718811035
+      Distance: 22.477075576782227
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -410,10 +352,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 0.9647963047027588
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.140000104904175
+      Yaw: 3.1750001907348633
     Saved: ~
 Window Geometry:
   Displays:
@@ -421,7 +363,7 @@ Window Geometry:
   Height: 846
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000002aafc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006200fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000041000002aa000000d600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002aafc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000041000002aa000000ae00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b00000003efc0100000002fb0000000800540069006d00650100000000000004b00000031300fffffffb0000000800540069006d0065010000000000000450000000000000000000000354000002aa00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000156000002b0fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000002b0000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002aafc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000041000002aa000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b00000003efc0100000002fb0000000800540069006d00650100000000000004b0000002fb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000354000002b000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -431,5 +373,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1200
-  X: 74
-  Y: 60
+  X: 172
+  Y: 522

@@ -159,8 +159,8 @@ class planner_ROS(Node):
         # print('goal tolerance', self.goal_tolerance)
         print('height', self.height)
         print(self.env_path)
-        # self.task_env = pickle.load(open(self.env_path, 'rb'))
-        self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
+        self.task_env = pickle.load(open(self.env_path, 'rb'))
+        # self.task_env = TaskEnv((5, 5), (10, 10), 1, 2, seed=0)
         self.agent_index = [0] * self.task_env.agents_num
 
         self.debug = True
@@ -270,7 +270,7 @@ class planner_ROS(Node):
         moving_marker.scale.x = 1.0
         moving_marker.scale.y = 1.0
         moving_marker.scale.z = 1.0
-        moving_marker.mesh_resource = 'package://rviz_markers/stl/drone600.stl'  # Replace with the path to your STL file
+        moving_marker.mesh_resource = 'package://planner_env/stl/drone600.stl'  # Replace with the path to your STL file
         moving_marker.color.r = 1.0
         moving_marker.color.g = 0.0
         moving_marker.color.b = 0.0

@@ -11,14 +11,14 @@ robots:
     # firmware_logging:
     #   enabled: true
     #   custom_topics:
-    #     topic_name3: 
+    #     topic_name3:
     #       frequency: 1
     #       vars: ["acc.x", "acc.y"]
 
   cf1:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E701
-    initial_position: [5.9, -1.5, 0.0] 
+    initial_position: [0.0, 0.0, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -29,7 +29,7 @@ robots:
   cf2:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E702
-    initial_position: [5.9, -3.1, 0.0]
+    initial_position: [0.0, 0.2, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -39,9 +39,9 @@ robots:
   cf3:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E703
-    initial_position: [5.9, -4.7, 0.0]
+    initial_position: [0.2, -0.2, 0.0]
     # initial_position: [0.0, 0.0, 0]
-    initial_quaternion: [0.0, 0.0, 0.0, 1.0]
+    initial_quaternion: [0.0, 0.4, 0.0, 1.0]
     type: cf21  # see robot_types
     mission_capable: true
     ip_add: "192.168.1.103"
@@ -49,7 +49,7 @@ robots:
   cf4:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E704
-    initial_position: [5.9, -6.3, 0.0]
+    initial_position: [0.0, 0.6, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -59,14 +59,14 @@ robots:
   cf5:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E705
-    initial_position: [5.9, -7.9, 0.0]
+    initial_position: [0.5, 0.5, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
     mission_capable: true
     ip_add: "192.168.1.105"
     port: 5000
-  # cf6:  
+  # cf6:
   #   enabled: true
   #   uri: radio://*/80/2M/E7E7E7E706
   #   initial_position: [4.4, -7.9, 0.0]
@@ -121,7 +121,7 @@ robots:
   #   mission_capable: true
   #   ip_add: "192.168.1.110"
   #   port: 5000
-  
+
   # cf11:
   #   enabled: true
   #   # uri: radio://0/100/2M/E7E7E7E711
@@ -233,17 +233,17 @@ robots:
   #   mission_capable: true
   #   ip_add: "192.168.1.120"
   #   port: 5000
-  # cf21:        # Unserviceable
-  #   enabled: true
-  #   # uri: radio://0/60/2M/E7E7E7E721
-  #   uri: radio://*/60/2M/E7E7E7E721
-  #   initial_position: [-3.335, 1.125, 0]
-  #   type: cf21  # see robot_types
-  #   # initial_position: [0.0, 0.0, 0]
-  #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
-  #   mission_capable: true
-  #   ip_add: "192.168.1.121"
-  #   port: 5000
+  # # cf21:        # Unserviceable
+  # #   enabled: true
+  # #   # uri: radio://0/60/2M/E7E7E7E721
+  # #   uri: radio://*/60/2M/E7E7E7E721
+  # #   initial_position: [-3.335, 1.125, 0]
+  # #   type: cf21  # see robot_types
+  # #   # initial_position: [0.0, 0.0, 0]
+  # #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
+  # #   mission_capable: true
+  # #   ip_add: "192.168.1.121"
+  # #   port: 5000
   # cf22:
   #   enabled: true
   #   # uri: radio://*/60/2M/E7E7E7E722
@@ -254,16 +254,16 @@ robots:
   #   mission_capable: true
   #   ip_add: "192.168.1.122"
   #   port: 5000
-  # cf23:   # Not in used
-  #   enabled: true
-  #   # uri: radio://0/60/2M/E7E7E7E723
-  #   uri: radio://3/60/2M/E7E7E7E723
-  #   initial_position: [-3.335, -0.375, 0]
-  #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
-  #   type: cf21  # see robot_types
-  #   mission_capable: true
-  #   ip_add: "192.168.1.123"
-  #   port: 5000
+  # # cf23:   # Not in used
+  # #   enabled: true
+  # #   # uri: radio://0/60/2M/E7E7E7E723
+  # #   uri: radio://3/60/2M/E7E7E7E723
+  # #   initial_position: [-3.335, -0.375, 0]
+  # #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
+  # #   type: cf21  # see robot_types
+  # #   mission_capable: true
+  # #   ip_add: "192.168.1.123"
+  # #   port: 5000
   # cf24:
   #   enabled: true
   #   uri: radio://*/60/2M/E7E7E7E724
@@ -294,7 +294,7 @@ robots:
     #     pNAcc_xy: 1.0 # default 0.5
     #firmware_logging:
     #  custom_topics:
-    #    topic_name3: 
+    #    topic_name3:
     #      frequency: 1
     #      vars: ["acc.x", "acc.y", "acc.z"]
 # Definition of the various robot types
@@ -318,7 +318,7 @@ robot_types:
     #     pose:
     #       frequency: 1 # Hz
     #   custom_topics:
-    #    topic_name3: 
+    #    topic_name3:
     #      frequency: 1
     #      vars: ["acc.x", "acc.y", "acc.z"]
 

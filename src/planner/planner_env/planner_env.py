@@ -146,7 +146,9 @@ class planner_ROS(Node):
         self.agent_env_velocity = self.get_parameter('agent_env_velocity').get_parameter_value().double_value
         self.const_time_bias = self.get_parameter('const_time_bias').get_parameter_value().double_value
         self.working_time_bias = self.get_parameter('working_time_bias').get_parameter_value().double_value
+        self.depot_loc = self.get_parameter('arena_depot').get_parameter_value().double_array_value
         print(self.working_time_bias)
+        print(self.depot_loc)
         self.land_on_node = False
 
         self.land_client = self.create_client(Land, '/all/land')
@@ -160,7 +162,7 @@ class planner_ROS(Node):
         print('height', self.height)
         print(self.env_path)
         self.task_env = pickle.load(open(self.env_path, 'rb'))
-        # self.task_env = TaskEnv((5, 5), (10, 10), 1, 2, seed=0)
+        # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
         self.agent_index = [0] * self.task_env.agents_num
 
         self.debug = True
@@ -415,7 +417,7 @@ class planner_ROS(Node):
         if (agent_node_idx < len(self.task_env.agent_dic[agent_idx]['arrival_time'])):
             next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
             if next_task_node == -1:
-                goal_pos = [0.0, 0.0]
+                goal_pos = self.depot_loc
                 # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
                 self.agent_index[agent_idx] += 1
                 goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])

@@ -591,8 +591,8 @@ class TaskEnv:
 
     def get_grouped_tasks(self):
         grouped_tasks = dict()
-        min_, max_ = np.min(self.tasks), np.max(self.tasks)
-        groups = np.arange(min_, max_ + 1).tolist()
+        groups = list(set(np.array(self.get_matrix(self.task_dic, 'requirements')).squeeze(1).tolist()))
+        # groups = np.arange(min_, max_ + 1).tolist()
         for task_requirement in groups:
             grouped_tasks[task_requirement] = dict()
         index = np.zeros_like(groups)

@@ -4,8 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
         - /MarkerArray1
-        - /MarkerArray1/Status1
         - /MarkerArray1/Topic1
         - /MarkerArray2
         - /MarkerArray3
@@ -293,7 +293,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 0; 0; 0
+    Background Color: 222; 221; 218
     Fixed Frame: world
     Frame Rate: 30
   Name: root
@@ -337,7 +337,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 22.477075576782227
+      Distance: 19.91969871520996
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -373,5 +373,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1200
-  X: 172
-  Y: 522
+  X: 151
+  Y: 823

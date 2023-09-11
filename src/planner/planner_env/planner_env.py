@@ -92,6 +92,8 @@ class planner_ROS(Node):
         self.agent_arena_velocity = self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
         self.agent_env_velocity = self.get_parameter('agent_env_velocity').get_parameter_value().double_value
         self.const_time_bias = self.get_parameter('const_time_bias').get_parameter_value().double_value
+        self.goal_difference = self.get_parameter('goal_difference').get_parameter_value().double_value
+        self.pos_bias = self.get_parameter('pos_bias').get_parameter_value().double_value
         self.working_time_bias = self.get_parameter('working_time_bias').get_parameter_value().double_value
         self.depot_loc = self.get_parameter('arena_depot').get_parameter_value().double_array_value
         print(f'The working time bias for this sim is - {self.working_time_bias}')
@@ -191,7 +193,7 @@ class planner_ROS(Node):
             moving_marker.scale.z = 1.0
             moving_marker.mesh_resource = 'package://planner_env/stl/cone.stl'  # Replace with the path to your STL file
             moving_marker.color.r = 1.0
-            moving_marker.color.g = 0.0
+            moving_marker.color.g = 1.0
             moving_marker.color.b = 0.0
             moving_marker.color.a = 1.0
             moving_marker.ns = str(i)
@@ -210,13 +212,13 @@ class planner_ROS(Node):
         moving_marker.pose.position.x = pose.pose.position.x
         moving_marker.pose.position.y = pose.pose.position.y
         moving_marker.pose.position.z = pose.pose.position.z
-        moving_marker.scale.x = 1.0
-        moving_marker.scale.y = 1.0
-        moving_marker.scale.z = 1.0
-        moving_marker.mesh_resource = 'package://planner_env/stl/drone600.stl'  # Replace with the path to your STL file
-        moving_marker.color.r = 1.0
+        moving_marker.scale.x = 0.005
+        moving_marker.scale.y = 0.005
+        moving_marker.scale.z = 0.005
+        moving_marker.mesh_resource = 'package://planner_env/stl/cf2_model.stl'  # Replace with the path to your STL file
+        moving_marker.color.r = 0.0
         moving_marker.color.g = 0.0
-        moving_marker.color.b = 0.0
+        moving_marker.color.b = 1.0
         moving_marker.color.a = 1.0
 
         marker_array.markers.append(moving_marker)
@@ -376,9 +378,9 @@ class planner_ROS(Node):
 
                 if agent_idx not in self.node_dic[next_task_node]['travelling_agents']:
                     self.node_dic[next_task_node]['travelling_agents'].append(agent_idx)
-                    pose_bias = 0.5 * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
                 else:
-                    pose_bias = 0.5 * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
 
                 goal_pos = self.task_env.task_dic[next_task_node]['location'] - pose_bias
                 current_time = time() - self.current_time
@@ -387,7 +389,7 @@ class planner_ROS(Node):
                 arrival_time = self.task_env.agent_dic[agent_idx]['arrival_time'][tracker_idx]
                 goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
                 # check1 = (current_time > arrival_time)
-                check1 = (goal_abs_difference < 1)
+                check1 = (goal_abs_difference < self.goal_difference)
                 if (check1) or (agent_idx in self.node_dic[next_task_node]['agents']):
                     self.publish_drone_markers(agent_idx, pose)
                     # if abs(current_time - arrival_time) > 0.5:

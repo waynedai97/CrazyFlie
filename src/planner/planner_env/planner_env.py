@@ -173,6 +173,7 @@ class planner_ROS(Node):
         # execute the task_env to load the agents
         self.load_execute_env(self.task_env, self.route_path)
         self.scale_arena_env()
+        self.takeoff_all()
         self.current_time = time()
 
     def publish_node_markers(self):
@@ -335,6 +336,20 @@ class planner_ROS(Node):
             is_external=True)
         self.usercommand_pub.publish(waypoint_cmd_old)
         print(f'Landing the agent {agent_name}')
+
+    def takeoff_all(self):
+        """Helper method to command all crazyflies to take off
+        """
+        waypoint = self.create_usercommand(
+            cmd="takeoff_all",
+            uav_id=[],
+        )
+
+        self.usercommand_pub.publish(waypoint)
+
+        self.get_logger().info("Commanded all crazyflies to take off")
+
+        sleep(10)
 
     def agent_pose_callback(self, pose, agent_idx):
         """Subscriber callback to save the actual pose of the agent

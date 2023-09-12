@@ -83,8 +83,8 @@ class planner_ROS(Node):
         self.check_agent_timer_period = self.get_parameter(
             'check_agent_timer_period').get_parameter_value().double_value
         self.goal_tolerance = self.get_parameter('goal_tolerance').get_parameter_value().double_value
-        self.height = 1.0  # self.get_parameter('agent_height').get_parameter_value().double_value
-        self.working_height = 0.5
+        self.height = self.get_parameter('agent_height').get_parameter_value().double_value
+        self.working_height = 1.0
         self.route_path = self.get_parameter(
             'route_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
         self.env_path = self.get_parameter(
@@ -114,7 +114,11 @@ class planner_ROS(Node):
         self.task_env = pickle.load(open(self.env_path, 'rb'))
         # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
         self.agent_index = [0] * self.task_env.agents_num
-
+        self.land_pose = []
+        for i in range(self.task_env.agents_num):
+            self.land_pose.append([0.0, 0.0, 0.0])
+        self.first_call = [True for i in range(self.task_env.agents_num)]
+        
         self.debug = True
         self.agent_arrival_dict = dict()
         # Map parameters
@@ -124,7 +128,6 @@ class planner_ROS(Node):
         self.map_y_cells = self.get_parameter('map_y_cells').get_parameter_value().integer_value
         self.map_data = (self.map_x, self.map_y, self.map_x_cells, self.map_y_cells)
         self.finished_count = 0
-        self.first_call = True
         # self.pub_srv = self.create_service(Trigger, 'add_two_ints', self.publish_waypoints)
         # self.goto_cli = self.create_client(GoTo, 'add_two_ints')
         print('Check map data', self.map_data)
@@ -139,7 +142,7 @@ class planner_ROS(Node):
         #####
         # Create publishers
         #####
-        self.usercommand_pub = self.create_publisher(UserCommand, "/user", 10)
+        self.usercommand_pub = self.create_publisher(UserCommand, "/user/external", 10)
         self.node_dic = dict()
         self.node_markers = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         for i in range(self.task_env.tasks_num):
@@ -334,6 +337,19 @@ class planner_ROS(Node):
         self.usercommand_pub.publish(waypoint_cmd_old)
         print(f'Landing the agent {agent_name}')
 
+    def takeoff_all(self):
+        """Helper method to command all crazyflies to take off
+        """
+        waypoint = self.create_usercommand(
+            cmd="takeoff_all",
+            uav_id=[],
+        )
+
+        self.usercommand_pub.publish(waypoint)
+
+        self.get_logger().info("Commanded all crazyflies to take off")
+
+
     def agent_pose_callback(self, pose, agent_idx):
         """Subscriber callback to save the actual pose of the agent
 
@@ -350,12 +366,16 @@ class planner_ROS(Node):
         # print(agent_id)
         current_pose = [pose.pose.position.x, pose.pose.position.y]
         self.publish_node_markers()
-
+        
+        if self.first_call[agent_idx]:
+            self.first_call[agent_idx] = False
+            self.land_pose[agent_idx] = [current_pose[0], current_pose[1], 0.0]
+            
         agent_node_idx = self.agent_index[agent_idx]
         if (agent_node_idx < len(self.task_env.agent_dic[agent_idx]['arrival_time'])):
             next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
             if next_task_node == -1:
-                goal_pos = self.depot_loc
+                goal_pos = self.land_pose[agent_idx]
                 # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
                 self.agent_index[agent_idx] += 1
                 goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
@@ -476,22 +496,6 @@ class planner_ROS(Node):
                 #    f"Agent {agent.id} has been removed from agent list. Ignoring..."
                 # )
                 continue
-
-
-
-
-    # Not used
-    def takeoff_all(self):
-        """Helper method to command all crazyflies to take off
-        """
-        waypoint = self.create_usercommand(
-            cmd="takeoff_all",
-            uav_id=[],
-        )
-
-        self.usercommand_pub.publish(waypoint)
-
-        self.get_logger().info("Commanded all crazyflies to take off")
 
     def create_usercommand(self, cmd, uav_id, goal=Point(), yaw=0.0, is_external=False):
         """Helper method to create a UserCommand message, used to send drone commands

@@ -23,7 +23,7 @@ map_x_cells: 570.0
 map_y_cells: 570.0
 
 # Agent height (meters)
-agent_height: 1.0
+agent_height: 1.5
 
 arena_scale: 5.0
 

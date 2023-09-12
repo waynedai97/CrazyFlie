@@ -127,7 +127,6 @@ class planner_ROS(Node):
         self.map_y_cells = self.get_parameter('map_y_cells').get_parameter_value().integer_value
         self.map_data = (self.map_x, self.map_y, self.map_x_cells, self.map_y_cells)
         self.finished_count = 0
-        self.first_call = True
         # self.pub_srv = self.create_service(Trigger, 'add_two_ints', self.publish_waypoints)
         # self.goto_cli = self.create_client(GoTo, 'add_two_ints')
         print('Check map data', self.map_data)

@@ -113,7 +113,11 @@ class planner_ROS(Node):
         self.task_env = pickle.load(open(self.env_path, 'rb'))
         # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
         self.agent_index = [0] * self.task_env.agents_num
-
+        self.land_pose = []
+        for i in range(self.task_env.agents_num):
+            self.land_pose.append([0.0, 0.0, 0.0])
+        self.first_call = [True for i in range(self.task_env.agents_num)]
+        
         self.debug = True
         self.agent_arrival_dict = dict()
         # Map parameters
@@ -349,12 +353,16 @@ class planner_ROS(Node):
         # print(agent_id)
         current_pose = [pose.pose.position.x, pose.pose.position.y]
         self.publish_node_markers()
-
+        
+        if self.first_call[agent_idx]:
+            self.first_call[agent_idx] = False
+            self.land_pose[agent_idx] = [current_pose[0], current_pose[1], 0.0]
+            
         agent_node_idx = self.agent_index[agent_idx]
         if (agent_node_idx < len(self.task_env.agent_dic[agent_idx]['arrival_time'])):
             next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
             if next_task_node == -1:
-                goal_pos = self.depot_loc
+                goal_pos = self.land_pose[agent_idx]
                 # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
                 self.agent_index[agent_idx] += 1
                 goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])

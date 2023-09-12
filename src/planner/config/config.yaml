@@ -35,12 +35,12 @@ agent_env_velocity: 0.2
 
 working_time_bias: 0
 
-goal_difference: 0.2
+goal_difference: 0.1
 
 pos_bias: 0.5
 
-arena_depot: [7.9663, 2.19486, 0.0]
+arena_depot: [0.0, 0.0, 0.0]
 
-route_path: "/home/marmot/Weiheng/crazyflie/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"
+route_path: "/home/wayne/crazyflie/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"
 
-env_path: "/home/marmot/Weiheng/crazyflie/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl"
+env_path: "/home/wayne/crazyflie/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl"

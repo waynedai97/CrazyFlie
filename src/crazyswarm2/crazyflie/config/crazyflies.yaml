@@ -19,7 +19,7 @@ robots:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E701
     # initial_position: [5.80658, 1.647, 0]
-    initial_position: [2.94, 8.45, 0.0]
+    initial_position: [0.0, 0.0, 0.0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
     mission_capable: true
@@ -29,7 +29,7 @@ robots:
   cf2:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E702
-    initial_position: [2.94, 8.45, 0.0]
+    initial_position: [0.6, 0.0, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -39,7 +39,7 @@ robots:
   cf3:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E703
-    initial_position: [2.94, 8.45, 0.0]
+    initial_position: [0.0, 0.6, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.4, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -49,23 +49,23 @@ robots:
   cf4:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E704
-    initial_position: [2.94, 8.45, 0.0]
+    initial_position: [0.6, 0.6, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
     mission_capable: true
     ip_add: "192.168.1.104"
     port: 5000
-  cf5:
-    enabled: true
-    uri: radio://*/80/2M/E7E7E7E705
-    initial_position: [2.94, 8.45, 0.0]
-    # initial_position: [0.0, 0.0, 0]
-    initial_quaternion: [0.0, 0.0, 0.0, 1.0]
-    type: cf21  # see robot_types
-    mission_capable: true
-    ip_add: "192.168.1.105"
-    port: 5000
+  # cf5:
+  #   enabled: true
+  #   uri: radio://*/80/2M/E7E7E7E705
+  #   initial_position: [1.2, 0.0, 0.0]
+  #   # initial_position: [0.0, 0.0, 0]
+  #   initial_quaternion: [0.0, 0.0, 0.0, 1.0]
+  #   type: cf21  # see robot_types
+  #   mission_capable: true
+  #   ip_add: "192.168.1.105"
+  #   port: 5000
   # cf6:  
   #   enabled: true
   #   uri: radio://*/80/2M/E7E7E7E706

@@ -84,6 +84,7 @@ class planner_ROS(Node):
             'check_agent_timer_period').get_parameter_value().double_value
         self.goal_tolerance = self.get_parameter('goal_tolerance').get_parameter_value().double_value
         self.height = 1.0  # self.get_parameter('agent_height').get_parameter_value().double_value
+        self.working_height = 0.5
         self.route_path = self.get_parameter(
             'route_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
         self.env_path = self.get_parameter(
@@ -98,7 +99,7 @@ class planner_ROS(Node):
         self.depot_loc = self.get_parameter('arena_depot').get_parameter_value().double_array_value
         print(f'The working time bias for this sim is - {self.working_time_bias}')
         print(f'The depot location in the rviz sim is {self.depot_loc}')
-        self.land_on_node = False
+        self.land_on_node = True
 
         self.land_client = self.create_client(Land, '/all/land')
 
@@ -326,7 +327,7 @@ class planner_ROS(Node):
             goal=Point(
                 x=goal_pos[0],
                 y=goal_pos[1],
-                z=1.5,
+                z=self.working_height,
             ),
             yaw=0.0,  # float(heading_real),
             is_external=True)

@@ -376,7 +376,7 @@ class planner_ROS(Node):
             next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
             if next_task_node == -1:
                 goal_pos = self.land_pose[agent_idx]
-                # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
+                print(f'agent {agent_idx} going to goal pose {goal_pos} ')
                 self.agent_index[agent_idx] += 1
                 goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
                 # if goal_abs_difference < 1:
@@ -396,7 +396,18 @@ class planner_ROS(Node):
                 self.usercommand_pub.publish(waypoint_cmd_old)
                 self.publish_drone_markers(agent_idx, pose)
             else:
-
+                waypoint_cmd_old = self.create_usercommand(
+                    cmd="goto_velocity",
+                    uav_id=['cf0'],
+                    goal=Point(
+                        x=0.0,
+                        y=0.0,
+                        z=self.height,
+                    ),
+                    yaw=0.0,  # float(heading_real),
+                    is_external=True)
+                self.usercommand_pub.publish(waypoint_cmd_old)
+                self.publish_drone_markers(agent_idx, pose)
                 if agent_idx not in self.node_dic[next_task_node]['travelling_agents']:
                     self.node_dic[next_task_node]['travelling_agents'].append(agent_idx)
                     pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
@@ -408,7 +419,7 @@ class planner_ROS(Node):
 
                 tracker_idx = self.agent_index[agent_idx]
                 arrival_time = self.task_env.agent_dic[agent_idx]['arrival_time'][tracker_idx]
-                goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
+                goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(-goal_pos[1] - current_pose[1])
                 # check1 = (current_time > arrival_time)
                 check1 = (goal_abs_difference < self.goal_difference)
                 if (check1) or (agent_idx in self.node_dic[next_task_node]['agents']):
@@ -459,9 +470,9 @@ class planner_ROS(Node):
             goal_pos = self.land_pose[agent_idx]
             # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
             self.agent_index[agent_idx] += 1
-            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
+            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(-goal_pos[1] - current_pose[1])
 
-            if goal_abs_difference > 3*self.goal_difference and not self.arrived[agent_idx]:
+            if goal_abs_difference > self.goal_difference and not self.arrived[agent_idx]:
 
                 waypoint_cmd_old = self.create_usercommand(
                 cmd="goto_velocity",

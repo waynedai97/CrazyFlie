@@ -41,6 +41,6 @@ pos_bias: 0.5
 
 arena_depot: [0.0, 0.0, 0.0]
 
-route_path: "/home/wayne/crazyflie/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"
+route_path: "/home/marmot/Weiheng/crazyflie/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"
 
-env_path: "/home/wayne/crazyflie/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl"
+env_path: "/home/marmot/Weiheng/crazyflie/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl"

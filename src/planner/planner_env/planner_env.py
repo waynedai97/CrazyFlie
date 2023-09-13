@@ -188,7 +188,7 @@ class planner_ROS(Node):
             moving_marker.action = Marker.ADD
             moving_marker.pose.position.x = self.task_env.task_dic[i]['location'][
                 0]  # Update the x position based on time
-            moving_marker.pose.position.y = self.task_env.task_dic[i]['location'][
+            moving_marker.pose.position.y = -self.task_env.task_dic[i]['location'][
                 1]  # Update the y position based on time
             moving_marker.pose.position.z = 0.
             moving_marker.pose.orientation.w = 1.0
@@ -329,7 +329,7 @@ class planner_ROS(Node):
             uav_id=[agent_name],
             goal=Point(
                 x=goal_pos[0],
-                y=goal_pos[1],
+                y=-goal_pos[1],
                 z=self.working_height,
             ),
             yaw=0.0,  # float(heading_real),
@@ -447,7 +447,7 @@ class planner_ROS(Node):
                         uav_id=[agent_name],
                         goal=Point(
                             x=goal_pos[0],
-                            y=goal_pos[1],
+                            y=-goal_pos[1],
                             z=self.height,
                         ),
                         yaw=0.0,  # float(heading_real),

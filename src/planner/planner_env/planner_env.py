@@ -14,6 +14,7 @@ from crazyswarm_application.msg import AgentState, AgentsStateFeedback, UserComm
 from crazyflie_interfaces.srv import Land
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Header
+from crazyswarm_application.srv import Agents 
 
 
 # import torch
@@ -160,9 +161,8 @@ class planner_ROS(Node):
         Create subscriber for agent state feedback
         Agent state feedback will create a agents_list and create a subscriber for each agent's pose
         '''
-        self.agent_state_sub = self.create_subscription(
-            AgentsStateFeedback, "/agents", self.agent_state_callback, 10
-        )
+        self.agent_state_sub = None
+        self.create_service(Agents, "/external/receive", self.external_callback)
         # self.pub_wp_timer = self.create_timer(
         #     self.pub_wp_timer_period, self.publish_waypoints
         # )
@@ -303,9 +303,9 @@ class planner_ROS(Node):
             AgentsStateFeedback, "/agents", self.agent_state_callback, 10
         )
 
-        self.pub_wp_timer = self.create_timer(
-            self.pub_wp_timer_period, self.publish_waypoints
-        )
+        # self.pub_wp_timer = self.create_timer(
+        #     self.pub_wp_timer_period, self.publish_waypoints
+        # )
 
 
         # self.crash_agent_timer = self.create_timer(
@@ -440,6 +440,7 @@ class planner_ROS(Node):
                                 print(
                                     f'agent{agent + 1} going to the next node {agent_next_node} the time taken on the task was {time_taken} while the supposed time was{actual_time}')
                 else:
+
                     # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
                     waypoint_cmd_old = self.create_usercommand(
                         cmd="goto_velocity",
@@ -455,6 +456,24 @@ class planner_ROS(Node):
                     self.publish_drone_markers(agent_idx, pose)
             self.finished = False
         else:
+            goal_pos = self.land_pose[agent_idx]
+            # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
+            self.agent_index[agent_idx] += 1
+            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
+
+            if goal_abs_difference > self.goal_difference:
+
+                waypoint_cmd_old = self.create_usercommand(
+                cmd="goto_velocity",
+                uav_id=[agent_name],
+                goal=Point(
+                    x=goal_pos[0],
+                    y=goal_pos[1],
+                    z=self.height,
+                ),
+                yaw=0.0,  # float(heading_real),
+                is_external=True)
+                self.usercommand_pub.publish(waypoint_cmd_old)
 
             print(f'Agent {agent_name} has completed its routes')
             self.publish_drone_markers(agent_idx, pose)

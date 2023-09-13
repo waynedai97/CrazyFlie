@@ -388,7 +388,7 @@ class planner_ROS(Node):
                     uav_id=[agent_name],
                     goal=Point(
                         x=goal_pos[0],
-                        y=goal_pos[1],
+                        y=-goal_pos[1],
                         z=self.height,
                     ),
                     yaw=0.0,  # float(heading_real),
@@ -468,7 +468,7 @@ class planner_ROS(Node):
                 uav_id=[agent_name],
                 goal=Point(
                     x=goal_pos[0],
-                    y=goal_pos[1],
+                    y=-goal_pos[1],
                     z=self.height,
                 ),
                 yaw=0.0,  # float(heading_real),

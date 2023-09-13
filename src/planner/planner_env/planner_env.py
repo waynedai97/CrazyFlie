@@ -119,7 +119,7 @@ class planner_ROS(Node):
         for i in range(self.task_env.agents_num):
             self.land_pose.append([0.0, 0.0, 0.0])
         self.first_call = [True for i in range(self.task_env.agents_num)]
-
+        self.arrived = [False for i in range(self.task_env.agents_num)]
         self.debug = True
         self.agent_arrival_dict = dict()
         # Map parameters
@@ -461,7 +461,7 @@ class planner_ROS(Node):
             self.agent_index[agent_idx] += 1
             goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
 
-            if goal_abs_difference > self.goal_difference:
+            if goal_abs_difference > 3*self.goal_difference and not self.arrived[agent_idx]:
 
                 waypoint_cmd_old = self.create_usercommand(
                 cmd="goto_velocity",
@@ -475,9 +475,12 @@ class planner_ROS(Node):
                 is_external=True)
                 self.usercommand_pub.publish(waypoint_cmd_old)
 
+
+            else:
+                self.arrived[agent_idx] = True
+                print(f'Agent {agent_name} will not publish anymore')
             print(f'Agent {agent_name} has completed its routes')
             self.publish_drone_markers(agent_idx, pose)
-
 
     def agent_state_callback(self, agent_states):
 

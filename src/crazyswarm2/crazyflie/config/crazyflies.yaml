@@ -29,7 +29,7 @@ robots:
   cf2:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E702
-    initial_position: [0.6, 0.0, 0.0]
+    initial_position: [0.0, -1.5, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -39,7 +39,7 @@ robots:
   cf3:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E703
-    initial_position: [0.0, 0.6, 0.0]
+    initial_position: [0.0, -3.0, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.4, 0.0, 1.0]
     type: cf21  # see robot_types
@@ -49,7 +49,7 @@ robots:
   cf4:
     enabled: true
     uri: radio://*/80/2M/E7E7E7E704
-    initial_position: [0.6, 0.6, 0.0]
+    initial_position: [0.0, -4.5, 0.0]
     # initial_position: [0.0, 0.0, 0]
     initial_quaternion: [0.0, 0.0, 0.0, 1.0]
     type: cf21  # see robot_types

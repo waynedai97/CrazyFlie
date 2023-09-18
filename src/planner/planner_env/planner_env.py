@@ -192,9 +192,9 @@ class planner_ROS(Node):
                 1]  # Update the y position based on time
             moving_marker.pose.position.z = 0.
             moving_marker.pose.orientation.w = 1.0
-            moving_marker.scale.x = 1.0
-            moving_marker.scale.y = 1.0
-            moving_marker.scale.z = 1.0
+            moving_marker.scale.x = 0.5
+            moving_marker.scale.y = 0.5
+            moving_marker.scale.z = 0.5
             moving_marker.mesh_resource = 'package://planner_env/stl/cone.stl'  # Replace with the path to your STL file
             moving_marker.color.r = 1.0
             moving_marker.color.g = 1.0
@@ -216,9 +216,9 @@ class planner_ROS(Node):
         moving_marker.pose.position.x = pose.pose.position.x
         moving_marker.pose.position.y = pose.pose.position.y
         moving_marker.pose.position.z = pose.pose.position.z
-        moving_marker.scale.x = 0.005
-        moving_marker.scale.y = 0.005
-        moving_marker.scale.z = 0.005
+        moving_marker.scale.x = 0.001
+        moving_marker.scale.y = 0.001
+        moving_marker.scale.z = 0.001
         moving_marker.mesh_resource = 'package://planner_env/stl/cf2_model.stl'  # Replace with the path to your STL file
         moving_marker.color.r = 0.0
         moving_marker.color.g = 0.0

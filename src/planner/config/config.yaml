@@ -23,9 +23,9 @@ map_x_cells: 570.0
 map_y_cells: 570.0
 
 # Agent height (meters)
-agent_height: 1.5
+agent_height: 1.0
 
-arena_scale: 5.0
+arena_scale: 3.0
 
 agent_arena_velocity: 0.55
 
@@ -37,7 +37,7 @@ working_time_bias: 0
 
 goal_difference: 0.1
 
-pos_bias: 0.5
+pos_bias: 0.4
 
 arena_depot: [0.0, 0.0, 0.0]
 

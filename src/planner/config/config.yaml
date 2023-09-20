@@ -37,7 +37,7 @@ working_time_bias: 0
 
 goal_difference: 0.1
 
-pos_bias: 0.4
+pos_bias: 0.5
 
 arena_depot: [0.0, 0.0, 0.0]
 

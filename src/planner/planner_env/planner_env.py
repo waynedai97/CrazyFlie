@@ -72,7 +72,7 @@ class planner_ROS(Node):
         self.inactive_agent_list = []
         self.check_time = time()
         self.mission_max_time = 60 * 20
-       
+        self.biases = [[[0,0]], [[-0.5, 0], [0.5, 0]], [[0, 0.577], [-0.5, -0.288], [0.5, -0.288]]]
 
         #####
         # Parameters
@@ -244,7 +244,7 @@ class planner_ROS(Node):
         plt.ion()                                                                                # Turn on interactive mode, image will be shown
         plt.cla()                                                                                # clear axes
         # plt.imshow(self.robot_belief, cmap='gray')                                               # cmap for colourmap
-        plt.axis((-15, 15, -15, 15))                      # (xmin,xmax,ymin,ymax)
+        plt.axis((-1, 4, -4, 1))                      # (xmin,xmax,ymin,ymax)
 
         # Plot the edges
         # if plot_edge:
@@ -471,9 +471,20 @@ class planner_ROS(Node):
                 self.publish_drone_markers(agent_idx, pose)
                 if agent_idx not in self.node_dic[next_task_node]['travelling_agents']:
                     self.node_dic[next_task_node]['travelling_agents'].append(agent_idx)
-                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    if self.node_dic[next_task_node]['requirement'] == 1:
+                        pose_bias = self.pos_bias * np.array(self.biases[0][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    elif self.node_dic[next_task_node]['requirement'] == 2:
+                        pose_bias = self.pos_bias * np.array(self.biases[1][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    else:
+                        pose_bias = self.pos_bias * np.array(self.biases[2][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    # pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
                 else:
-                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    if self.node_dic[next_task_node]['requirement'] == 1:
+                        pose_bias = self.pos_bias * np.array(self.biases[0][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    elif self.node_dic[next_task_node]['requirement'] == 2:
+                        pose_bias = self.pos_bias * np.array(self.biases[1][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    else:
+                        pose_bias = self.pos_bias * np.array(self.biases[2][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
 
                 goal_pos = self.task_env.task_dic[next_task_node]['location'] - pose_bias
                 current_time = time() - self.current_time
@@ -533,7 +544,7 @@ class planner_ROS(Node):
             goal_pos = self.land_pose[agent_idx]
             # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
             self.agent_index[agent_idx] += 1
-            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(-goal_pos[1] - current_pose[1])
+            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
 
             if goal_abs_difference > self.goal_difference and not self.arrived[agent_idx]:
                 self.next_position[agent_idx] = [current_pose[0], current_pose[1]]

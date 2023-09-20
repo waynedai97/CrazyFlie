@@ -9,6 +9,7 @@ import os
 import copy
 import yaml
 from rclpy.node import Node
+from matplotlib import pyplot as plt
 from geometry_msgs.msg import Point, PoseStamped
 from crazyswarm_application.msg import AgentState, AgentsStateFeedback, UserCommand
 from crazyflie_interfaces.srv import Land
@@ -60,9 +61,9 @@ class planner_ROS(Node):
         # self.policy_net = policy_net
         self.RLPlanner = None
         self.episode_id = 8561
-        self.robots_route = []
+        self.robots_route = dict()
         self.robots_name = []
-        self.next_position = []
+        self.next_position = dict()
         self.robots_heading = []
 
         # Set the agent list
@@ -71,6 +72,7 @@ class planner_ROS(Node):
         self.inactive_agent_list = []
         self.check_time = time()
         self.mission_max_time = 60 * 20
+       
 
         #####
         # Parameters
@@ -114,10 +116,13 @@ class planner_ROS(Node):
         print(f'Loadin the env from the file present at {self.env_path}')
         self.task_env = pickle.load(open(self.env_path, 'rb'))
         # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
+        self.node_coordinates = np.zeros((self.task_env.tasks_num,2))
         self.agent_index = [0] * self.task_env.agents_num
         self.land_pose = []
         for i in range(self.task_env.agents_num):
             self.land_pose.append([0.0, 0.0, 0.0])
+            self.robots_name.append('cf'+str(i+1))
+
         self.first_call = [True for i in range(self.task_env.agents_num)]
         self.arrived = [False for i in range(self.task_env.agents_num)]
         self.debug = True
@@ -135,6 +140,7 @@ class planner_ROS(Node):
         self.marker_publishers = []
         for i in range(self.task_env.agents_num):
             self.marker_publishers.append(self.create_publisher(MarkerArray, 'cf' + str(i + 1) + '_marker', 10))
+            self.robots_route[i] = []
 
         if self.debug == True:
             for i in range(self.task_env.agents_num):
@@ -146,13 +152,7 @@ class planner_ROS(Node):
         self.usercommand_pub = self.create_publisher(UserCommand, "/user/external", 10)
         self.node_dic = dict()
         self.node_markers = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
-        for i in range(self.task_env.tasks_num):
-            self.node_dic[i] = {'agents': [],
-                                'requirement': self.task_env.task_dic[i]['requirements'][0],
-                                'working_start_time': 0.0,
-                                # 'agent_pose_bias': []#[0.5*x for x in range(self.task_env.task_dic[i]['requirements'][0])]
-                                'travelling_agents': [],
-                                }
+        
 
         #####
         # Create subscribers
@@ -175,7 +175,15 @@ class planner_ROS(Node):
         self.load_execute_env(self.task_env, self.route_path)
         self.scale_arena_env()
         self.current_time = time()
-
+        for i in range(self.task_env.tasks_num):
+    
+            self.node_dic[i] = {'agents': [],
+                                'requirement': self.task_env.task_dic[i]['requirements'][0],
+                                'working_start_time': 0.0,
+                                # 'agent_pose_bias': []#[0.5*x for x in range(self.task_env.task_dic[i]['requirements'][0])]
+                                'travelling_agents': [],
+                                }
+            self.node_coordinates[i][0], self.node_coordinates[i][1] = self.task_env.task_dic[i]['location'][0], self.task_env.task_dic[i]['location'][1]
     def publish_node_markers(self):
 
         marker_array = MarkerArray()
@@ -192,9 +200,9 @@ class planner_ROS(Node):
                 1]  # Update the y position based on time
             moving_marker.pose.position.z = 0.
             moving_marker.pose.orientation.w = 1.0
-            moving_marker.scale.x = 0.5
-            moving_marker.scale.y = 0.5
-            moving_marker.scale.z = 0.5
+            moving_marker.scale.x = 1.0
+            moving_marker.scale.y = 1.0
+            moving_marker.scale.z = 1.0
             moving_marker.mesh_resource = 'package://planner_env/stl/cone.stl'  # Replace with the path to your STL file
             moving_marker.color.r = 1.0
             moving_marker.color.g = 1.0
@@ -216,9 +224,9 @@ class planner_ROS(Node):
         moving_marker.pose.position.x = pose.pose.position.x
         moving_marker.pose.position.y = pose.pose.position.y
         moving_marker.pose.position.z = pose.pose.position.z
-        moving_marker.scale.x = 0.001
-        moving_marker.scale.y = 0.001
-        moving_marker.scale.z = 0.001
+        moving_marker.scale.x = 0.005
+        moving_marker.scale.y = 0.005
+        moving_marker.scale.z = 0.005
         moving_marker.mesh_resource = 'package://planner_env/stl/cf2_model.stl'  # Replace with the path to your STL file
         moving_marker.color.r = 0.0
         moving_marker.color.g = 0.0
@@ -229,6 +237,52 @@ class planner_ROS(Node):
 
         # Publish the moving marker
         self.marker_publishers[agent_idx].publish(marker_array)
+
+
+    def plot_live_env(self, robots_route, robots_name, next_position, heading, plot_robot_name = True, plot_edge=False):
+
+        plt.ion()                                                                                # Turn on interactive mode, image will be shown
+        plt.cla()                                                                                # clear axes
+        # plt.imshow(self.robot_belief, cmap='gray')                                               # cmap for colourmap
+        plt.axis((-15, 15, -15, 15))                      # (xmin,xmax,ymin,ymax)
+
+        # Plot the edges
+        # if plot_edge:
+        #   for i in range(len(self.map.x)):
+        #     plt.plot(self.map.x[i], self.map.y[i], 'tan', zorder=1)                              # tan; is the colour, zorder is the layer, smaller means further away from the viewer
+
+        # Plot nodes and frontiers
+        #TODO
+        plt.scatter(self.node_coordinates[:, 0], -self.node_coordinates[:, 1], c='r', zorder=5)
+        # plt.scatter(self.frontiers[:, 0], self.frontiers[:, 1], c='r', s=2, zorder=3)            # Frontiers
+
+        # Plot robot route
+        #TODO
+        for i,route in (robots_route.items()):
+            if route != []:
+                xPoints = route
+                yPoints = route
+                # print(f'THe x point is {xPoints} anf the y point is {yPoints}')
+                #plt.plot(xPoints[-1], yPoints[-1], 'b', linewidth=2)                                   # Robot path
+                #plt.plot(xPoints[0], yPoints[0], 'mo', markersize=8, zorder = 10)   
+                plt.plot(xPoints[-1][0], yPoints[-1][1], 'mo', markersize=8, zorder = 10)                    # Current robot location
+                plt.plot(xPoints[0][0], yPoints[0][1], 'co', markersize=8, zorder = 5)                    # Start location
+
+                # Plot robot name and next position
+                if robots_name != [] and plot_robot_name:
+                    a =1 
+                    # plt.text(xPoints[-1]-20, yPoints[-1]+25, s=robots_name[i], fontsize=12, zorder=10, weight='bold')                # Robot name
+                if next_position != None and plot_robot_name and next_position[i] != []:
+                    plt.plot(next_position[i][0], next_position[i][1], 'bo', markersize=10, zorder = 5)                # Next position
+                    # plt.text(next_position[i][0], next_position[i][1]+25, s=robots_name[i], fontsize=12, zorder=10, weight='bold')    # Robot name
+                #plt.arrow(next_position[i][0], next_position[i][1], 35*np.cos(heading[i]), 35*np.sin(heading[i]), color='b', zorder=12)        # Robot heading
+
+        # Image title
+        # plt.title('Explored ratio: {:.4g}'.format(self.explored_rate))
+        plt.tight_layout()
+        #plt.axis('off')
+        plt.pause(1e-2)
+
 
     def agent_callback(self, msg):
         print("Pose is ", msg.pose.position.x)
@@ -307,18 +361,23 @@ class planner_ROS(Node):
         #     self.pub_wp_timer_period, self.publish_waypoints
         # )
 
+        self.plot_agent_timer = self.create_timer(
+            self.check_agent_timer_period, self.plot_agents
+        )
 
         # self.crash_agent_timer = self.create_timer(
         #     1, self.check_crash_agent
         # )
+
         return response
 
     def plot_agents(self):
         """
         Call back to plot the agent and map
         """
-        if (self.robots_route != []) and (self.RLPlanner != None):
-            self.RLPlanner.env.plot_live_env(self.robots_route, self.robots_name, self.next_position,
+        if (self.robots_route != None):
+            # print(self.robots_route)
+            self.plot_live_env(self.robots_route, self.robots_name, self.next_position,
                                              self.robots_heading)
         else:
             return
@@ -370,7 +429,9 @@ class planner_ROS(Node):
         if self.first_call[agent_idx]:
             self.first_call[agent_idx] = False
             self.land_pose[agent_idx] = [current_pose[0], current_pose[1], 0.0]
+            self.robots_route[agent_idx].append([self.land_pose[agent_idx][0], self.land_pose[agent_idx][1], 0.0])
 
+        self.robots_route[agent_idx].append([current_pose[0], current_pose[1], 1]) #Does height matter?
         agent_node_idx = self.agent_index[agent_idx]
         if (agent_node_idx < len(self.task_env.agent_dic[agent_idx]['arrival_time'])):
             next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
@@ -382,7 +443,7 @@ class planner_ROS(Node):
                 # if goal_abs_difference < 1:
                 #     if self.finished_count >= self.task_env.agents_num:
                 #     self.finished_count += 1
-
+                self.next_position[agent_idx] = [current_pose[0], current_pose[1]]
                 waypoint_cmd_old = self.create_usercommand(
                     cmd="goto_velocity",
                     uav_id=[agent_name],
@@ -423,6 +484,7 @@ class planner_ROS(Node):
                 # check1 = (current_time > arrival_time)
                 check1 = (goal_abs_difference < self.goal_difference)
                 if (check1) or (agent_idx in self.node_dic[next_task_node]['agents']):
+                    self.next_position[agent_idx] = []
                     self.publish_drone_markers(agent_idx, pose)
                     # if abs(current_time - arrival_time) > 0.5:
                     #     print(f'agent {agent_idx} missed its arrival time at node {}')
@@ -453,6 +515,7 @@ class planner_ROS(Node):
                 else:
 
                     # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
+                    self.next_position[agent_idx] = [current_pose[0], current_pose[1]]
                     waypoint_cmd_old = self.create_usercommand(
                         cmd="goto_velocity",
                         uav_id=[agent_name],
@@ -470,9 +533,10 @@ class planner_ROS(Node):
             goal_pos = self.land_pose[agent_idx]
             # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
             self.agent_index[agent_idx] += 1
-            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(goal_pos[1] - current_pose[1])
+            goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(-goal_pos[1] - current_pose[1])
 
             if goal_abs_difference > self.goal_difference and not self.arrived[agent_idx]:
+                self.next_position[agent_idx] = [current_pose[0], current_pose[1]]
 
                 waypoint_cmd_old = self.create_usercommand(
                 cmd="goto_velocity",

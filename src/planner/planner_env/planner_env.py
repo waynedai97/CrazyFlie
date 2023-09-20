@@ -71,6 +71,7 @@ class planner_ROS(Node):
         self.inactive_agent_list = []
         self.check_time = time()
         self.mission_max_time = 60 * 20
+        self.biases = [[[0,0]], [[-0.5, 0], [0.5, 0]], [[0, 0.577], [-0.5, -0.288], [0.5, -0.288]]]
 
         #####
         # Parameters
@@ -192,9 +193,9 @@ class planner_ROS(Node):
                 1]  # Update the y position based on time
             moving_marker.pose.position.z = 0.
             moving_marker.pose.orientation.w = 1.0
-            moving_marker.scale.x = 0.5
-            moving_marker.scale.y = 0.5
-            moving_marker.scale.z = 0.5
+            moving_marker.scale.x = 1.0
+            moving_marker.scale.y = 1.0
+            moving_marker.scale.z = 1.0
             moving_marker.mesh_resource = 'package://planner_env/stl/cone.stl'  # Replace with the path to your STL file
             moving_marker.color.r = 1.0
             moving_marker.color.g = 1.0
@@ -216,9 +217,9 @@ class planner_ROS(Node):
         moving_marker.pose.position.x = pose.pose.position.x
         moving_marker.pose.position.y = pose.pose.position.y
         moving_marker.pose.position.z = pose.pose.position.z
-        moving_marker.scale.x = 0.001
-        moving_marker.scale.y = 0.001
-        moving_marker.scale.z = 0.001
+        moving_marker.scale.x = 0.005
+        moving_marker.scale.y = 0.005
+        moving_marker.scale.z = 0.005
         moving_marker.mesh_resource = 'package://planner_env/stl/cf2_model.stl'  # Replace with the path to your STL file
         moving_marker.color.r = 0.0
         moving_marker.color.g = 0.0
@@ -410,11 +411,22 @@ class planner_ROS(Node):
                 self.publish_drone_markers(agent_idx, pose)
                 if agent_idx not in self.node_dic[next_task_node]['travelling_agents']:
                     self.node_dic[next_task_node]['travelling_agents'].append(agent_idx)
-                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    if self.node_dic[next_task_node]['requirement'] == 1:
+                        pose_bias = self.pos_bias * np.array(self.biases[0][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    elif self.node_dic[next_task_node]['requirement'] == 2:
+                        pose_bias = self.pos_bias * np.array(self.biases[1][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    else:
+                        pose_bias = self.pos_bias * np.array(self.biases[2][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    # pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
                 else:
-                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    if self.node_dic[next_task_node]['requirement'] == 1:
+                        pose_bias = self.pos_bias * np.array(self.biases[0][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    elif self.node_dic[next_task_node]['requirement'] == 2:
+                        pose_bias = self.pos_bias * np.array(self.biases[1][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    else:
+                        pose_bias = self.pos_bias * np.array(self.biases[2][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
 
-                goal_pos = self.task_env.task_dic[next_task_node]['location'] - pose_bias
+                goal_pos = self.task_env.task_dic[next_task_node]['location'] + pose_bias
                 current_time = time() - self.current_time
 
                 tracker_idx = self.agent_index[agent_idx]

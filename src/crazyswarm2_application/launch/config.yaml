@@ -33,7 +33,7 @@ orca_static_expansion_factor: 0.35
 move_land_tolerance: 3.0
 concave_obstacles: true
 trajectory_parameters:
-  max_velocity: 0.55
+  max_velocity: 0.8
   maximum_yaw_change: 4.0
   reached_threshold: 0.275
   takeoff_land_velocity: 0.6

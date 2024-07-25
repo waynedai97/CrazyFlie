@@ -7,6 +7,7 @@
 - source ${ROS1_INSTALL_PATH}/setup.bash
 - source ${ROS2_INSTALL_PATH}/setup.bash
 - ros2 run ros1_bridge dynamic_bridge
+- sudo apt install ros-humble-controller-manager-msgs
 
  ## Setting configs for scaling the env
  - planner/config/config.yaml has the following parameters that can be tuned to sync ugv and uav performance. Typically increase the agent arena velocity and decrease the working time bias.

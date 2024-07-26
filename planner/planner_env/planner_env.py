@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 from time import time  # https://realpython.com/python-time-module/
 from functools import partial
-from .env.task_env import TaskEnv
+from task_env import TaskEnv
 from std_srvs.srv import Trigger
 import rclpy
 import os
@@ -15,6 +15,7 @@ from crazyswarm_application.msg import AgentState, AgentsStateFeedback, UserComm
 from crazyflie_interfaces.srv import Land
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Header
+from std_msgs.msg import String
 from crazyswarm_application.srv import Agents 
 
 
@@ -90,8 +91,9 @@ class planner_ROS(Node):
         self.working_height = 1.0
         self.route_path = self.get_parameter(
             'route_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
-        self.env_path = self.get_parameter(
-            'env_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
+        # self.env_path = self.get_parameter(
+        #     'env_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
+        self.env_path = "/home/ur10/swarming/planner/planner_env/baseline.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
         self.arena_scale = self.get_parameter('arena_scale').get_parameter_value().double_value
         self.agent_arena_velocity = self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
         self.agent_env_velocity = self.get_parameter('agent_env_velocity').get_parameter_value().double_value
@@ -116,15 +118,15 @@ class planner_ROS(Node):
         print(f'Loadin the env from the file present at {self.env_path}')
         self.task_env = pickle.load(open(self.env_path, 'rb'))
         # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
-        self.node_coordinates = np.zeros((self.task_env.tasks_num,2))
-        self.agent_index = [0] * self.task_env.agents_num
+        self.node_coordinates = np.zeros((len(self.task_env['tasks']),2))
+        self.agent_index = [0] * len(self.task_env['tasks'])
         self.land_pose = []
-        for i in range(self.task_env.agents_num):
+        for i in range(len(self.task_env['agent'])):
             self.land_pose.append([0.0, 0.0, 0.0])
             self.robots_name.append('cf'+str(i+1))
 
-        self.first_call = [True for i in range(self.task_env.agents_num)]
-        self.arrived = [False for i in range(self.task_env.agents_num)]
+        self.first_call = [True for i in range(len(self.task_env['agent']))]
+        self.arrived = [False for i in range(len(self.task_env['agent']))]
         self.debug = True
         self.agent_arrival_dict = dict()
         # Map parameters
@@ -140,14 +142,14 @@ class planner_ROS(Node):
         self.marker_publishers = []
         self.agent_stat_pubs = []
 
-        for i in range(self.task_env.agents_num):
+        for i in range(len(self.task_env['agent'])):
             self.marker_publishers.append(self.create_publisher(MarkerArray, 'cf' + str(i + 1) + '_marker', 10))
             self.robots_route[i] = []
             pub = self.create_publisher(f'/nexus{i}/hetero_agent_stat', String, 10)
             self.agent_state_pubs.append(pub)
 
         if self.debug == True:
-            for i in range(self.task_env.agents_num):
+            for i in range(len(self.task_env['agent'])):
                 t = (int(0), float(0.0), float(0.0))
                 self.agent_arrival_dict[i] = [str(t)]
         #####
@@ -172,22 +174,22 @@ class planner_ROS(Node):
         # )
         self.agent_pose_sub = []
         self.land_clients = []
-        self.names = []task_env
+        self.names = []
         # self.create_timer(0.2, self.publish_waypoints)
 
         # execute the task_env to load the agents
-        self.load_execute_env(self.task_env, self.route_path)
+        # self.load_execute_env(self.task_env, self.route_path)
         self.scale_arena_env()
         self.current_time = time()
-        for i in range(self.task_env.tasks_num):
+        for i in range(len(self.task_env['tasks'])):
     
             self.node_dic[i] = {'agents': [],
-                                'requirement': self.task_env.task_dic[i]['requirements'][0],
+                                'requirement': self.task_env['tasks'][i]['requirements'][0],
                                 'working_start_time': 0.0,
-                                # 'agent_pose_bias': []#[0.5*x for x in range(self.task_env.task_dic[i]['requirements'][0])]
+                                # 'agent_pose_bias': []#[0.5*x for x in range(self.task_env['tasks'][i]['requirements'][0])]
                                 'travelling_agents': [],
                                 }
-            self.node_coordinates[i][0], self.node_coordinates[i][1] = self.task_env.task_dic[i]['location'][0], self.task_env.task_dic[i]['location'][1]
+            self.node_coordinates[i][0], self.node_coordinates[i][1] = self.task_env['tasks'][i]['location'][0], self.task_env['tasks'][i]['location'][1]
     def publish_node_markers(self):
 
         marker_array = MarkerArray()
@@ -198,9 +200,9 @@ class planner_ROS(Node):
             moving_marker.header = Header(frame_id='world')
             moving_marker.type = Marker.MESH_RESOURCE
             moving_marker.action = Marker.ADD
-            moving_marker.pose.position.x = self.task_env.task_dic[i]['location'][
+            moving_marker.pose.position.x = self.task_env['tasks'][i]['location'][
                 0]  # Update the x position based on time
-            moving_marker.pose.position.y = -self.task_env.task_dic[i]['location'][
+            moving_marker.pose.position.y = -self.task_env['tasks'][i]['location'][
                 1]  # Update the y position based on time
             moving_marker.pose.position.z = 0.
             moving_marker.pose.orientation.w = 1.0
@@ -303,24 +305,24 @@ class planner_ROS(Node):
         print(f'The velocity of the agents in the actual env was {env_vel}')
 
 
-        for agent in self.task_env.agent_dic:
-            for i in range(len(self.task_env.agent_dic[agent]['arrival_time'])):
-                old_ar_t = self.task_env.agent_dic[agent]['arrival_time'][i]
-                self.task_env.agent_dic[agent]['arrival_time'][i] *= (
+        for agent in self.task_env['agent']:
+            for i in range(len(self.task_env['agent'][agent]['arrival_time'])):
+                old_ar_t = self.task_env['agent'][agent]['arrival_time'][i]
+                self.task_env['agent'][agent]['arrival_time'][i] *= (
                             (env_vel * arena_scale) / arena_vel)  # Magic numbers for scaling arrival time
-                self.task_env.agent_dic[agent]['arrival_time'][i] += const_time_bias  # takeoff time
-                new_arrival_time = self.task_env.agent_dic[agent]['arrival_time'][i]
+                self.task_env['agent'][agent]['arrival_time'][i] += const_time_bias  # takeoff time
+                new_arrival_time = self.task_env['agent'][agent]['arrival_time'][i]
 
-        for node in self.task_env.task_dic:
-            # print(self.task_env.task_dic[node]['requirement'])
-            self.task_env.task_dic[node]['location'] *= arena_scale
-            self.task_env.task_dic[node]['time_start'] *= ((env_vel * arena_scale) / arena_vel)
-            self.task_env.task_dic[node]['time_start'] += const_time_bias
-            self.task_env.task_dic[node]['time'] += working_time_bias
-            new_working_time = self.task_env.task_dic[node]['time']
+        for node in self.task_env['tasks']:
+            # print(self.task_env['tasks'][node]['requirement'])
+            self.task_env['tasks'][node]['location'] *= arena_scale
+            self.task_env['tasks'][node]['time_start'] *= ((env_vel * arena_scale) / arena_vel)
+            self.task_env['tasks'][node]['time_start'] += const_time_bias
+            self.task_env['tasks'][node]['time'] += working_time_bias
+            new_working_time = self.task_env['tasks'][node]['time']
             print(f' The working time for task node {node} is changed to {new_working_time }')
-            self.task_env.task_dic[node]['time_finish'] = self.task_env.task_dic[node]['time_start'] + \
-                                                          self.task_env.task_dic[node]['time']
+            self.task_env['tasks'][node]['time_finish'] = self.task_env['tasks'][node]['time_start'] + \
+                                                          self.task_env['tasks'][node]['time']
 
     def load_execute_env(self, task_env, route_path):
 
@@ -437,8 +439,8 @@ class planner_ROS(Node):
 
         self.robots_route[agent_idx].append([current_pose[0], current_pose[1], 1]) #Does height matter?
         agent_node_idx = self.agent_index[agent_idx]
-        if (agent_node_idx < len(self.task_env.agent_dic[agent_idx]['arrival_time'])):
-            next_task_node = self.task_env.agent_dic[agent_idx]['route'][self.agent_index[agent_idx]]
+        if (agent_node_idx < len(self.task_env['agent'][agent_idx]['arrival_time'])):
+            next_task_node = self.task_env['agent'][agent_idx]['route'][self.agent_index[agent_idx]]
             if next_task_node == -1:
                 goal_pos = self.land_pose[agent_idx]
                 print(f'agent {agent_idx} going to goal pose {goal_pos} ')
@@ -479,11 +481,11 @@ class planner_ROS(Node):
                 else:
                     pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
 
-                goal_pos = self.task_env.task_dic[next_task_node]['location'] - pose_bias
+                goal_pos = self.task_env['tasks'][next_task_node]['location'] - pose_bias
                 current_time = time() - self.current_time
 
                 tracker_idx = self.agent_index[agent_idx]
-                arrival_time = self.task_env.agent_dic[agent_idx]['arrival_time'][tracker_idx]
+                arrival_time = self.task_env['agent'][agent_idx]['arrival_time'][tracker_idx]
                 goal_abs_difference = abs(goal_pos[0] - current_pose[0]) + abs(-goal_pos[1] - current_pose[1])
                 # check1 = (current_time > arrival_time)
                 check1 = (goal_abs_difference < self.goal_difference)
@@ -514,10 +516,10 @@ class planner_ROS(Node):
                         print(f'all agents have arrived to the node {next_task_node}')
                         working_time = time() - self.node_dic[next_task_node]['working_start_time']
                         print(f'The working time for the node {next_task_node} is {working_time}')
-                        if (working_time > self.task_env.task_dic[next_task_node]['time']):  # Completed the task
+                        if (working_time > self.task_env['tasks'][next_task_node]['time']):  # Completed the task
                             for agent in (self.node_dic[next_task_node]['agents']):
                                 self.agent_index[agent] += 1
-                                agent_next_node = self.task_env.agent_dic[agent]['route'][self.agent_index[agent]]
+                                agent_next_node = self.task_env['agent'][agent]['route'][self.agent_index[agent]]
                                 time_taken = time() - self.node_dic[next_task_node]['working_start_time']
                                 actual_time = self.node_dic[next_task_node]['working_start_time']
                                 print(
@@ -540,7 +542,7 @@ class planner_ROS(Node):
 
                     # PUBLISH THAT THE AGENT IS TRAVELLING
                     agent_msg = String()
-                    agent_msg.data = f'Agent{i} - TRAVELLING'
+                    agent_msg.data = f'Agent{agent_idx} - TRAVELLING'
                     self.agent_stat_pubs[agent_idx].publish(agent_msg)
 
                     self.publish_drone_markers(agent_idx, pose)
@@ -577,11 +579,11 @@ class planner_ROS(Node):
 
         # # Start by checking adding any new agents to the agent list and start their pose subscriber
         if self.agent_list == {}:
-            for agent in self.task_env.agent_dic:
+            for agent in self.task_env['agent']:
                 # print('hre')
                 # print(agent)
 
-                self.agent_list[agent] = self.task_env.agent_dic[agent]
+                self.agent_list[agent] = self.task_env['agent'][agent]
                 # print(agent.id)
                 agent_name = "/cf" + str(agent + 1)
                 print(agent_name)

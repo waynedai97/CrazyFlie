@@ -74,6 +74,7 @@ class planner_ROS(Node):
         self.inactive_agent_list = []
         self.check_time = time()
         self.mission_max_time = 60 * 20
+        self.biases = [[[0,0]], [[-0.5, 0], [0.5, 0]], [[0, 0.577], [-0.5, -0.288], [0.5, -0.288]]]
 
         #####
         # Parameters
@@ -91,9 +92,7 @@ class planner_ROS(Node):
         self.working_height = 1.0
         self.route_path = self.get_parameter(
             'route_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/route_ros.yaml"#self.get_parameter('route_path').get_parameter_value().string_value
-        self.env_path = self.get_parameter(
-            'env_path').get_parameter_value().string_value  # "/home/ur10/swarming/crazyswarm2_ws/src/planner/planner_env/env_ros.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
-        # self.env_path = "/home/ur10/swarming/planner/planner_env/baseline.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
+        self.env_path = "/home/marmot/Weiheng/HeteroMRTA/testSet_simulation/env_1/baseline.pkl" #self.get_parameter('env_path').get_parameter_value().string_value
         self.arena_scale = self.get_parameter('arena_scale').get_parameter_value().double_value
         self.agent_arena_velocity = self.get_parameter('agent_arena_velocity').get_parameter_value().double_value
         self.agent_env_velocity = self.get_parameter('agent_env_velocity').get_parameter_value().double_value
@@ -102,10 +101,9 @@ class planner_ROS(Node):
         self.pos_bias = self.get_parameter('pos_bias').get_parameter_value().double_value
         self.working_time_bias = self.get_parameter('working_time_bias').get_parameter_value().double_value
         self.depot_loc = self.get_parameter('arena_depot').get_parameter_value().double_array_value
-
         print(f'The working time bias for this sim is - {self.working_time_bias}')
         print(f'The depot location in the rviz sim is {self.depot_loc}')
-        self.land_on_node = True
+        self.land_on_node = False
 
         self.land_client = self.create_client(Land, '/all/land')
 
@@ -120,11 +118,12 @@ class planner_ROS(Node):
         self.task_env = pickle.load(open(self.env_path, 'rb'))
         task_env = self.task_env
         # self.task_env['agent'] = {}
-        for i in range(3, 6):
-            del self.task_env['agent'][i]
+        # for i in range(3, 6):
+        #     del self.task_env['agent'][i]
         # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
         self.node_coordinates = np.zeros((len(self.task_env['tasks']), 2))
-        self.agent_index = [0] * len(self.task_env['tasks'])
+        self.agent_index = [0] * len(self.task_env['agent'])
+        self.height_species = [1, 1, 1, 2, 2, 2]
         self.land_pose = []
         for i in range(len(self.task_env['agent'])):
             self.land_pose.append([0.0, 0.0, 0.0])
@@ -461,7 +460,7 @@ class planner_ROS(Node):
             self.land_pose[agent_idx] = [current_pose[0], current_pose[1], 0.0]
             self.robots_route[agent_idx].append([self.land_pose[agent_idx][0], self.land_pose[agent_idx][1], 0.0])
 
-        self.robots_route[agent_idx].append([current_pose[0], current_pose[1], 1])  # Does height matter?
+        self.robots_route[agent_idx].append([current_pose[0], current_pose[1], self.height * self.height_species[agent_idx]])  # Does height matter?
         agent_node_idx = self.agent_index[agent_idx]
         if (agent_node_idx < len(self.task_env['agent'][agent_idx]['arrival_time'])):
             next_task_node = self.task_env['agent'][agent_idx]['route'][self.agent_index[agent_idx]]
@@ -480,7 +479,7 @@ class planner_ROS(Node):
                     goal=Point(
                         x=goal_pos[0],
                         y=-goal_pos[1],
-                        z=self.height,
+                        z=self.height * self.height_species[agent_idx],
                     ),
                     yaw=0.0,  # float(heading_real),
                     is_external=True)
@@ -493,7 +492,7 @@ class planner_ROS(Node):
                     goal=Point(
                         x=0.0,
                         y=0.0,
-                        z=self.height,
+                        z=self.height * self.height_species[agent_idx],
                     ),
                     yaw=0.0,  # float(heading_real),
                     is_external=True)
@@ -501,9 +500,20 @@ class planner_ROS(Node):
                 self.publish_drone_markers(agent_idx, pose)
                 if agent_idx not in self.node_dic[next_task_node]['travelling_agents']:
                     self.node_dic[next_task_node]['travelling_agents'].append(agent_idx)
-                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    if self.node_dic[next_task_node]['requirement'] == 1:
+                        pose_bias = self.pos_bias * np.array(self.biases[0][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    elif self.node_dic[next_task_node]['requirement'] == 2:
+                        pose_bias = self.pos_bias * np.array(self.biases[1][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    else:
+                        pose_bias = self.pos_bias * np.array(self.biases[2][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    # pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
                 else:
-                    pose_bias = self.pos_bias * self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)
+                    if self.node_dic[next_task_node]['requirement'] == 1:
+                        pose_bias = self.pos_bias * np.array(self.biases[0][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    elif self.node_dic[next_task_node]['requirement'] == 2:
+                        pose_bias = self.pos_bias * np.array(self.biases[1][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
+                    else:
+                        pose_bias = self.pos_bias * np.array(self.biases[2][self.node_dic[next_task_node]['travelling_agents'].index(agent_idx)])
 
                 goal_pos = self.task_env['tasks'][next_task_node]['location'] - pose_bias
                 current_time = time() - self.current_time
@@ -518,11 +528,11 @@ class planner_ROS(Node):
                     self.publish_drone_markers(agent_idx, pose)
                     # if abs(current_time - arrival_time) > 0.5:
                     #     print(f'agent {agent_idx} missed its arrival time at node {}')
-
-                    agent_msg = String()
-                    agent_msg.data = f'Agent{agent_idx} - Task{next_task_node}'
-                    self.agent_stat_pubs[agent_idx].publish(agent_msg)
-                    # print(f'publishing that agent{agent_idx} arrived at task{next_task_node}')
+                    #
+                    # agent_msg = String()
+                    # agent_msg.data = f'Agent{agent_idx} - Task{next_task_node}'
+                    # self.agent_stat_pubs[agent_idx].publish(agent_msg)
+                    # # print(f'publishing that agent{agent_idx} arrived at task{next_task_node}')
                     if agent_idx not in self.node_dic[next_task_node]['agents']:
                         print(
                             f'agent  {agent_idx + 1} arrived at node {next_task_node} at time {current_time} while the arrival time was {arrival_time} ')
@@ -544,13 +554,12 @@ class planner_ROS(Node):
                         print(f'The working time for the node {next_task_node} is {working_time}')
                         if (working_time > self.task_env['tasks'][next_task_node]['time']):  # Completed the task
                             for agent in (self.node_dic[next_task_node]['agents']):
-                                if agent in self.uav_ids:
-                                    self.agent_index[agent] += 1
-                                    agent_next_node = self.task_env['agent'][agent]['route'][self.agent_index[agent]]
-                                    time_taken = time() - self.node_dic[next_task_node]['working_start_time']
-                                    actual_time = self.node_dic[next_task_node]['working_start_time']
-                                    print(
-                                        f'agent{agent + 1} going to the next node {agent_next_node} the time taken on the task was {time_taken} while the supposed time was{actual_time}')
+                                self.agent_index[agent] += 1
+                                agent_next_node = self.task_env['agent'][agent]['route'][self.agent_index[agent]]
+                                time_taken = time() - self.node_dic[next_task_node]['working_start_time']
+                                actual_time = self.node_dic[next_task_node]['working_start_time']
+                                print(
+                                    f'agent{agent + 1} going to the next node {agent_next_node} the time taken on the task was {time_taken} while the supposed time was{actual_time}')
                 else:
 
                     # print(f'agent {agent_idx} going to goal pose {goal_pos} ')
@@ -561,16 +570,16 @@ class planner_ROS(Node):
                         goal=Point(
                             x=goal_pos[0],
                             y=-goal_pos[1],
-                            z=self.height,
+                            z=self.height * self.height_species[agent_idx],
                         ),
                         yaw=0.0,  # float(heading_real),
                         is_external=True)
                     self.usercommand_pub.publish(waypoint_cmd_old)
-
-                    # PUBLISH THAT THE AGENT IS TRAVELLING
-                    agent_msg = String()
-                    agent_msg.data = f'Agent{agent_idx} - TRAVELLING'
-                    self.agent_stat_pubs[agent_idx].publish(agent_msg)
+                    #
+                    # # PUBLISH THAT THE AGENT IS TRAVELLING
+                    # agent_msg = String()
+                    # agent_msg.data = f'Agent{agent_idx} - TRAVELLING'
+                    # self.agent_stat_pubs[agent_idx].publish(agent_msg)
 
                     self.publish_drone_markers(agent_idx, pose)
             self.finished = False
@@ -589,7 +598,7 @@ class planner_ROS(Node):
                     goal=Point(
                         x=goal_pos[0],
                         y=goal_pos[1],
-                        z=self.height,
+                        z=self.height * self.height_species[agent_idx],
                     ),
                     yaw=0.0,  # float(heading_real),
                     is_external=True)
@@ -623,20 +632,20 @@ class planner_ROS(Node):
                         10,
                     )
                 )
-
-                # self.dummy_sub = self.create_subscription(
-                # String,
-                # f'/chatter',
-                # self.dummy_callback,
-                # 10)
-
-                sub = self.create_subscription(
-                    String,
-                    f'/nexus{agent + 3}/hetero_agent_stat',
-                    partial(self.agent_stat_callback, robot_id=agent + 3),
-                    10)
-
-                self.agent_stat_subs.append(sub)
+                #
+                # # self.dummy_sub = self.create_subscription(
+                # # String,
+                # # f'/chatter',
+                # # self.dummy_callback,
+                # # 10)
+                #
+                # sub = self.create_subscription(
+                #     String,
+                #     f'/nexus{agent + 3}/hetero_agent_stat',
+                #     partial(self.agent_stat_callback, robot_id=agent + 3),
+                #     10)
+                #
+                # self.agent_stat_subs.append(sub)
 
                 self.land_clients.append(self.create_client(Land, agent_name + "/land"))
 

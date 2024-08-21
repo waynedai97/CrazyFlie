@@ -123,7 +123,7 @@ class planner_ROS(Node):
         # self.task_env = TaskEnv((5, 5), (10, 10), 1, 3, seed=0)
         self.node_coordinates = np.zeros((len(self.task_env['tasks']), 2))
         self.agent_index = [0] * len(self.task_env['agent'])
-        self.height_species = [1, 1, 1, 2, 2, 2]
+        self.height_species = [1, 1, 1, 1.8, 1.8, 1.8]
         self.land_pose = []
         for i in range(len(self.task_env['agent'])):
             self.land_pose.append([0.0, 0.0, 0.0])
@@ -235,9 +235,9 @@ class planner_ROS(Node):
         moving_marker.pose.position.x = pose.pose.position.x
         moving_marker.pose.position.y = pose.pose.position.y
         moving_marker.pose.position.z = pose.pose.position.z
-        moving_marker.scale.x = 0.005
-        moving_marker.scale.y = 0.005
-        moving_marker.scale.z = 0.005
+        moving_marker.scale.x = 0.002
+        moving_marker.scale.y = 0.002
+        moving_marker.scale.z = 0.002
         moving_marker.mesh_resource = 'package://planner_env/stl/cf2_model.stl'  # Replace with the path to your STL file
         moving_marker.color.r = 0.0
         moving_marker.color.g = 0.0
